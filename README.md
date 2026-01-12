@@ -75,3 +75,4 @@ The source code for Crowd Fund Castle is released under the [MIT License](LICENS
 ---
 
 **Disclaimer:** This project is a fictional representation and not associated with any real-world company or service. The information provided here is for demonstration purposes only and does not constitute financial or investment advice.
+# crowdfunding-frontend
