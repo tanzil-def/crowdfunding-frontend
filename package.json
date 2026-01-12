@@ -11,8 +11,10 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^1.9.5",
+    "axios": "^1.13.2",
     "core-js-pure": "^3.30.2",
-    "framer-motion": "^10.12.13",
+    "framer-motion": "^10.18.0",
+    "lucide-react": "^0.562.0",
     "rc-progress": "^3.4.1",
     "react": "^18.2.0",
     "react-avatar": "^5.0.3",
@@ -20,6 +22,7 @@
     "react-icons": "^4.8.0",
     "react-redux": "^8.0.5",
     "react-router-dom": "^6.11.1",
+    "recharts": "^3.6.0",
     "swiper": "^9.3.2"
   },
   "devDependencies": {

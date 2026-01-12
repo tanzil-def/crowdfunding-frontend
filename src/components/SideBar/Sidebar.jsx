@@ -1,67 +1,39 @@
-import { IoLogOut } from "react-icons/io5";
-import DarkModeToggle from "../DarkModeButton/DarkModeToggle";
-import {
-  MdOutlineAccountCircle,
-  MdOutlineDashboard,
-  MdOutlineMoney,
-} from "react-icons/md";
-import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import { userLogOut } from "../../store/userSlice";
+import React from 'react';
+import { Link } from 'react-router-dom';
 
-const SideBar = ({ isMenuOpen, setIsMenuOpen }) => {
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
-
-  const handleMenu = (route) => {
-    setIsMenuOpen(false);
-
-    navigate(`${route === "dashboard" ? "/dashboard" : "/dashboard/" + route}`);
-  };
+const Sidebar = () => {
+  const menus = [
+    { name: 'Overview', icon: '📊', link: '/dashboard/developer' },
+    { name: 'My Projects', icon: '🏗️', link: '/dashboard/developer/projects' },
+    { name: 'Add New Project', icon: '➕', link: '/dashboard/developer/add-project' },
+    { name: 'Access Requests', icon: '🔑', link: '/dashboard/developer/requests' },
+    { name: 'Notifications', icon: '🔔', link: '/dashboard/developer/notifications' },
+  ];
 
   return (
-    <aside
-      className={`flex justify-center absolute left-0 sm:relative z-10 -translate-x-full ease-in-out duration-500 sm:translate-x-0 ${
-        isMenuOpen && "translate-x-0"
-      }`}
-    >
-      <div className="w-screen  bg-light-backgroundColor p-4 flex flex-col items-center dark:bg-dark-cardBgColor sm:m-4 sm:w-20 sm:justify-between sm:h-85vh sm:shadow-custom sm:rounded-3xl">
-        <div className="flex flex-col items-start gap-8 dark:text-dark-secondaryTextColor">
-          <div
-            className="flex justify-center items-center gap-4 cursor-pointer"
-            onClick={() => handleMenu("dashboard")}
-          >
-            <MdOutlineDashboard className="w-8 h-8 mt-2" />
-            <div className="text-2xl font-bold sm:hidden">Dashboard</div>
-          </div>
-          <div
-            className="flex justify-center items-center gap-4 cursor-pointer"
-            onClick={() => handleMenu("portfolio")}
-          >
-            <MdOutlineMoney className="w-8 h-8 mt-2" />
-            <div className="text-2xl font-bold sm:hidden">Portfolio</div>
-          </div>
-          <div
-            className="flex justify-center items-center gap-4 cursor-pointer"
-            onClick={() => handleMenu("account")}
-          >
-            <MdOutlineAccountCircle className="w-8 h-8 mt-2" />
-            <div className="text-2xl font-bold sm:hidden">Account</div>
-          </div>
-          <div
-            className="flex justify-center items-center gap-4 cursor-pointer"
-            onClick={() => dispatch(userLogOut())}
-          >
-            <IoLogOut className="w-8 h-8 mt-2" />
-            <div className="text-2xl font-bold sm:hidden">Logout</div>
-          </div>
-        </div>
-        <div className="w-60 pt-6 flex items-start sm:items-center sm:w-8">
-          <DarkModeToggle />
-        </div>
+    <div className="w-64 h-screen bg-slate-900 border-r border-slate-800 p-6 fixed left-0 top-0">
+      <div className="mb-10 text-emerald-500 font-bold text-2xl tracking-tighter">
+        CROWD CASTLE <span className="text-white text-xs block text-right">DEV PANEL</span>
       </div>
-    </aside>
+      <nav className="space-y-2">
+        {menus.map((menu) => (
+          <Link
+            key={menu.name}
+            to={menu.link}
+            className="flex items-center gap-3 text-slate-400 hover:text-white hover:bg-white/5 p-3 rounded-xl transition-all font-medium"
+          >
+            <span>{menu.icon}</span>
+            {menu.name}
+          </Link>
+        ))}
+      </nav>
+      <div className="absolute bottom-10 left-6 right-6">
+         <button className="w-full p-3 bg-red-500/10 text-red-500 rounded-xl font-bold hover:bg-red-500 hover:text-white transition-all">
+           Logout
+         </button>
+      </div>
+    </div>
   );
 };
 
-export default SideBar;
+export default Sidebar;

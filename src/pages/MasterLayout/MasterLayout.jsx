@@ -7,18 +7,18 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchAllPropertiesList } from "../../store/thunk";
 
 const MasterLayout = () => {
-  const isUserLoggedIn = useSelector((state) => state.userSlice.isUserLoggedIn);
+  const isUserLoggedIn = useSelector((state) => state.user?.isUserLoggedIn ?? false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isUserLoggedIn) {
+    if (!isUserLoggedIn ?? false) {
       navigate("/");
     } else {
       dispatch(fetchAllPropertiesList());
     }
-  }, [isUserLoggedIn, navigate, dispatch]);
+  }, [isUserLoggedIn ?? false, navigate, dispatch]);
 
   return (
     <main>
