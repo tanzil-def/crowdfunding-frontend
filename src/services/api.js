@@ -1,4 +1,3 @@
-// src/services/api.js
 import axios from 'axios';
 
 const api = axios.create({
@@ -6,17 +5,33 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
 });
 
+// Request interceptor
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  // Only add Authorization header for requests **other than login/register**
+  if (!config.url.includes('/auth/login/') && !config.url.includes('/auth/register/')) {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
+
+  // CSRF token
+  const csrfToken = document.cookie
+    .split('; ')
+    .find(row => row.startsWith('csrftoken='))
+    ?.split('=')[1];
+  if (csrfToken) {
+    config.headers['X-CSRFToken'] = csrfToken;
+  }
+
   return config;
 });
 
 export const loginUser = async ({ email, password }) => {
+  // Do not include any Authorization header for login
   const response = await api.post('/api/v1/auth/login/', { email, password });
   return response.data;
 };

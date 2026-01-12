@@ -4,17 +4,14 @@ import { motion } from 'framer-motion';
 const Hero = () => {
   return (
     <section className="relative h-[110vh] w-full flex items-center justify-center overflow-hidden">
-      {/* Background with Luxury Overlay */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-110"
         style={{ backgroundImage: `url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=2070&auto=format&fit=crop')` }}
       >
-        {/* Multi-layered Gradient for "Premium Look" */}
         <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-[2px]"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-slate-950/20"></div>
       </div>
 
-      {/* Trust Badge / Top Floating Tag */}
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -28,7 +25,6 @@ const Hero = () => {
         </div>
       </motion.div>
 
-      {/* Content Section */}
       <div className="relative z-10 text-center px-4 max-w-6xl mt-10">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
@@ -52,7 +48,6 @@ const Hero = () => {
           High-yield real estate investments for everyone. Build your <span className="text-white font-semibold underline decoration-emerald-500">wealth</span> with fractional ownership in prime luxury properties.
         </motion.p>
 
-        {/* Action Buttons with High-End Styling */}
         <motion.div 
           className="flex flex-col md:flex-row gap-6 justify-center items-center"
         >
@@ -66,7 +61,6 @@ const Hero = () => {
           </button>
         </motion.div>
 
-        {/* High-Lighted Stats Bar (Bottom Part) */}
         <div className="mt-24 grid grid-cols-2 md:grid-cols-4 gap-4 p-2 bg-white/[0.03] border border-white/10 rounded-[2.5rem] backdrop-blur-3xl">
           {[
             { label: 'Total Invested', value: '$240.8M', color: 'text-emerald-400' },
@@ -82,7 +76,6 @@ const Hero = () => {
         </div>
       </div>
 
-      {/* Floating Notification (Fake Real-time activity) */}
       <motion.div 
         initial={{ x: 100, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}

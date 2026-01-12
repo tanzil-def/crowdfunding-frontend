@@ -1,35 +1,35 @@
 import { Outlet, useNavigate } from "react-router-dom";
-import Footer from "../../components/Footer/Footer";
-import SideBar from "../../components/SideBar/Sidebar";
-import PrivatecHeader from "../../components/Header/PrivateHeader";
-import { useState, useEffect, memo } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchAllPropertiesList } from "../../store/thunk";
+import { useEffect } from "react";
+import Sidebar from "../../components/SideBar/Sidebar";
+import PrivateHeader from "../../components/Header/PrivateHeader";
 
 const MasterLayout = () => {
-  const isUserLoggedIn = useSelector((state) => state.user?.isUserLoggedIn ?? false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isUserLoggedIn ?? false) {
-      navigate("/");
-    } else {
-      dispatch(fetchAllPropertiesList());
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      navigate("/login");
     }
-  }, [isUserLoggedIn ?? false, navigate, dispatch]);
+  }, [navigate]);
 
   return (
-    <main>
-      <PrivatecHeader isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
-      <div className="flex">
-        <SideBar isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
-        <Outlet />
+    <div className="min-h-screen bg-slate-950 text-white flex overflow-hidden">
+      {/* Fixed Sidebar */}
+      <Sidebar />
+
+      {/* Main content area - push right by sidebar width */}
+      <div className="flex-1 flex flex-col ml-64">
+        {/* Fixed top header */}
+        <PrivateHeader />
+
+        {/* Scrollable main content */}
+        <main className="flex-1 overflow-y-auto p-6 lg:p-10">
+          <Outlet />
+        </main>
       </div>
-      <Footer />
-    </main>
+    </div>
   );
 };
 
-export default memo(MasterLayout);
+export default MasterLayout;

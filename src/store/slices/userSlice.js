@@ -9,7 +9,7 @@ const initialState = {
   isAuthenticated: true,
   isUserLoggedIn: true,
   role: 'DEVELOPER',
-  propertiesList: []  // Dummy array to fix PrivateHeader error
+  propertiesList: []  // Dummy array to avoid Header errors
 };
 
 const userSlice = createSlice({
