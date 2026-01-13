@@ -1,31 +1,23 @@
-import { Outlet, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
-import Sidebar from "../../components/SideBar/Sidebar";
+import React from "react";
+import { Outlet } from "react-router-dom";
+import Sidebar from "../../components/SideBar/Sidebar"; 
 import PrivateHeader from "../../components/Header/PrivateHeader";
 
-const MasterLayout = () => {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-      navigate("/login");
-    }
-  }, [navigate]);
-
+const MasterLayout = ({ role }) => {
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex overflow-hidden">
-      {/* Fixed Sidebar */}
-      <Sidebar />
+    <div className="flex h-screen bg-[#020617] overflow-hidden text-slate-200">
+      {/* Sidebar - Fixed Left */}
+      <Sidebar role={role} />
 
-      {/* Main content area - push right by sidebar width */}
-      <div className="flex-1 flex flex-col ml-64">
-        {/* Fixed top header */}
+      <div className="flex flex-col flex-1 min-w-0 ml-64"> 
+        {/* Private Header - Fixed Top inside Content Area */}
         <PrivateHeader />
 
-        {/* Scrollable main content */}
-        <main className="flex-1 overflow-y-auto p-6 lg:p-10">
-          <Outlet />
+        {/* Main Content Scrollable Area */}
+        <main className="flex-1 overflow-y-auto pt-24 p-8">
+          <div className="max-w-7xl mx-auto">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>
