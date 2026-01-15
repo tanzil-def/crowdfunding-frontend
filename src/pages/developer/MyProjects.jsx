@@ -1,239 +1,368 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  LayoutGrid, List, Search, Plus, MoreVertical, ExternalLink, 
-  Edit3, Trash2, Clock, CheckCircle2, AlertCircle, Archive, DollarSign 
-} from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { getMyProjects, getProjectMedia, submitProjectForReview } from "../../services/api";
+import { motion } from "framer-motion";
+import {
+  Plus,
+  Edit,
+  Image as ImageIcon,
+  Send,
+  TrendingUp,
+  Calendar,
+  DollarSign,
+  Users
+} from "lucide-react";
+import { toast } from "react-hot-toast";
+import { getMediaUrl } from "../../utils/media";
 
 const MyProjects = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [filter, setFilter] = useState("ALL");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    const fetchMyProjects = async () => {
-      try {
-        const token = localStorage.getItem('accessToken');
-        if (!token) throw new Error('No authentication token found. Please login again.');
+    fetchProjects();
+  }, [filter, page]);
 
-        const response = await fetch('http://127.0.0.1:8000/api/v1/projects/my/', {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to load projects (${response.status})`);
-        }
-
-        const data = await response.json();
-        // Handle both paginated (results) and direct array response
-        setProjects(data.results || data);
-      } catch (err) {
-        setError(err.message || 'Unable to fetch your projects');
-      } finally {
-        setLoading(false);
+  const fetchProjects = async () => {
+    try {
+      setLoading(true);
+      const params = { page, page_size: 12 };
+      if (filter !== "ALL") {
+        params.status = filter;
       }
-    };
 
-    fetchMyProjects();
-  }, []);
-
-  const getStatusStyle = (status) => {
-    switch (status?.toUpperCase()) {
-      case 'APPROVED': return 'bg-green-100 text-green-700 border-green-200';
-      case 'PENDING': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-      case 'REJECTED': return 'bg-red-100 text-red-700 border-red-200';
-      case 'DRAFT': return 'bg-gray-100 text-gray-700 border-gray-200';
-      default: return 'bg-blue-100 text-blue-700 border-blue-200';
+      const res = await getMyProjects(params);
+      // Handle potential { success: true, data: { ... } } wrapper
+      const data = res.data || res;
+      setProjects(data.results || []);
+      setTotalPages(Math.ceil((data.count || 0) / 12));
+    } catch (error) {
+      console.error("MyProjects fetch error:", error);
+      toast.error("Failed to fetch projects");
+    } finally {
+      setLoading(false);
     }
   };
-
-  const getStatusIcon = (status) => {
-    switch (status?.toUpperCase()) {
-      case 'APPROVED': return <CheckCircle2 size={14} />;
-      case 'PENDING': return <Clock size={14} />;
-      case 'REJECTED': return <AlertCircle size={14} />;
-      case 'DRAFT': return <Archive size={14} />;
-      default: return null;
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-red-50 border border-red-200 text-red-700 p-8 rounded-xl text-center max-w-2xl mx-auto">
-        <AlertCircle className="mx-auto mb-4" size={40} />
-        <h3 className="text-xl font-bold mb-2">Error Loading Projects</h3>
-        <p>{error}</p>
-      </div>
-    );
-  }
 
   return (
-    <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">My Projects</h1>
-          <p className="text-gray-500">Manage and monitor your crowdfunding listings</p>
-        </div>
-        <button className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium transition-all shadow-md">
-          <Plus size={18} />
-          Create New Project
-        </button>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-emerald-900 to-slate-900 p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8"
+        >
+          <div>
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent mb-2">
+              My Projects
+            </h1>
+            <p className="text-gray-400 text-lg">
+              Manage and track all your crowdfunding projects
+            </p>
+          </div>
+          <Link
+            to="/developer/projects/new"
+            className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-emerald-500/50 flex items-center gap-2"
+          >
+            <Plus className="w-5 h-5" />
+            New Project
+          </Link>
+        </motion.div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
-          <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Total Projects</p>
-          <p className="text-2xl font-black text-gray-900 mt-1">{projects.length}</p>
-        </div>
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm border-l-4 border-l-green-500">
-          <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Approved</p>
-          <p className="text-2xl font-black text-green-600 mt-1">
-            {projects.filter(p => p.status?.toUpperCase() === 'APPROVED').length}
-          </p>
-        </div>
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm border-l-4 border-l-yellow-500">
-          <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">In Review</p>
-          <p className="text-2xl font-black text-yellow-600 mt-1">
-            {projects.filter(p => p.status?.toUpperCase() === 'PENDING').length}
-          </p>
-        </div>
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm border-l-4 border-l-blue-500">
-          <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Total Shares Sold</p>
-          <p className="text-2xl font-black text-blue-600 mt-1">
-            {projects.reduce((acc, p) => acc + (p.shares_sold || 0), 0).toLocaleString()}
-          </p>
-        </div>
-      </div>
-
-      {/* Search & View Toggle */}
-      <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div className="relative w-full md:w-96">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-          <input 
-            type="text" 
-            placeholder="Search your projects..."
-            className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-          />
-        </div>
-        <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg border border-gray-200">
-          <button className="p-2 bg-white rounded-md text-blue-600 shadow-sm">
-            <LayoutGrid size={18} />
-          </button>
-          <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
-            <List size={18} />
-          </button>
-        </div>
-      </div>
-
-      {/* Projects Grid */}
-      {projects.length === 0 ? (
-        <div className="bg-white p-12 rounded-2xl text-center border border-gray-200 shadow-sm">
-          <FolderKanban className="mx-auto text-gray-400 mb-4" size={64} />
-          <h3 className="text-2xl font-bold text-gray-700 mb-3">No Projects Yet</h3>
-          <p className="text-gray-500 mb-6 max-w-md mx-auto">
-            You haven't created any crowdfunding projects yet. Start your first one now!
-          </p>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-medium inline-flex items-center gap-2 shadow-md">
-            <Plus size={20} /> Create New Project
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project) => (
-            <div key={project.id} className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-all overflow-hidden flex flex-col">
-              {/* Project Image / Placeholder */}
-              <div className="h-48 bg-gray-100 relative overflow-hidden">
-                {project.main_image || project.thumbnail ? (
-                  <img 
-                    src={project.main_image || project.thumbnail} 
-                    alt={project.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    onError={(e) => { e.target.src = 'https://via.placeholder.com/400x200?text=No+Image'; }}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-                    <Archive size={64} className="text-gray-300" />
-                  </div>
-                )}
-              </div>
-
-              <div className="p-6 flex-grow">
-                <div className="flex justify-between items-start mb-4">
-                  <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold border flex items-center gap-1.5 uppercase tracking-wide ${getStatusStyle(project.status)}`}>
-                    {getStatusIcon(project.status)}
-                    {project.status || 'UNKNOWN'}
-                  </span>
-                  <button className="text-gray-400 hover:text-gray-600">
-                    <MoreVertical size={20} />
-                  </button>
-                </div>
-
-                <h3 className="text-lg font-bold text-gray-900 mb-1 leading-tight">{project.title}</h3>
-                <p className="text-sm text-gray-500 mb-6">{project.category}</p>
-
-                <div className="space-y-4 pt-4 border-t border-gray-100">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500 flex items-center gap-1">
-                      <DollarSign size={14} className="text-gray-400" /> Valuation:
-                    </span>
-                    <span className="font-bold text-gray-900">
-                      ${Number(project.total_project_value || 0).toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500 font-medium">Funding Progress:</span>
-                    <span className="font-bold text-gray-900">
-                      {Math.round((project.shares_sold || 0) / (project.total_shares || 1) * 100)}%
-                    </span>
-                  </div>
-                  
-                  <div className="w-full bg-gray-100 rounded-full h-2">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full transition-all duration-700 ease-out" 
-                      style={{ width: `${Math.min(100, (project.shares_sold || 0) / (project.total_shares || 1) * 100)}%` }}
-                    ></div>
-                  </div>
-                  <div className="flex justify-between text-[11px] text-gray-400 font-bold uppercase tracking-tight">
-                    <span>{(project.shares_sold || 0).toLocaleString()} Sold</span>
-                    <span>{(project.total_shares || 0).toLocaleString()} Total</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gray-50 px-6 py-4 flex items-center justify-between border-t border-gray-100">
-                <span className="text-xs text-gray-400 font-medium italic">
-                  Created: {project.created_at ? new Date(project.created_at).toLocaleDateString() : 'N/A'}
-                </span>
-                <div className="flex gap-2">
-                  <button className="p-2 text-gray-500 hover:bg-white hover:text-blue-600 rounded-lg transition-all border border-transparent hover:border-gray-200 shadow-sm" title="Edit">
-                    <Edit3 size={18} />
-                  </button>
-                  <button className="p-2 text-gray-500 hover:bg-white hover:text-red-600 rounded-lg transition-all border border-transparent hover:border-gray-200 shadow-sm" title="Delete">
-                    <Trash2 size={18} />
-                  </button>
-                  <button className="p-2 text-gray-500 hover:bg-white hover:text-gray-900 rounded-lg transition-all border border-transparent hover:border-gray-200 shadow-sm" title="View Details">
-                    <ExternalLink size={18} />
-                  </button>
-                </div>
-              </div>
-            </div>
+        {/* Filters */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex gap-3 mb-8 overflow-x-auto pb-2"
+        >
+          {["ALL", "DRAFT", "PENDING_REVIEW", "APPROVED", "REJECTED", "NEEDS_CHANGES"].map((status) => (
+            <button
+              key={status}
+              onClick={() => {
+                setFilter(status);
+                setPage(1);
+              }}
+              className={`px-6 py-3 rounded-xl font-semibold whitespace-nowrap transition-all ${filter === status
+                ? "bg-gradient-to-r from-emerald-600 to-green-600 text-white shadow-lg shadow-emerald-500/50"
+                : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"
+                }`}
+            >
+              {status.replace("_", " ")}
+            </button>
           ))}
-        </div>
-      )}
+        </motion.div>
+
+        {/* Projects Grid */}
+        {projects.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-12 text-center"
+          >
+            <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Plus className="w-10 h-10 text-emerald-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2">No Projects Found</h2>
+            <p className="text-gray-400 mb-6">
+              {filter === "ALL"
+                ? "Create your first crowdfunding project to get started"
+                : `No ${filter.toLowerCase()} projects`}
+            </p>
+            <Link
+              to="/developer/projects/new"
+              className="inline-block px-6 py-3 bg-gradient-to-r from-emerald-600 to-green-600 text-white font-bold rounded-xl hover:from-emerald-500 hover:to-green-500 transition-all"
+            >
+              Create Project
+            </Link>
+          </motion.div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {projects.map((project, index) => (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                index={index}
+                onRefresh={fetchProjects}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center gap-2 mt-8">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-4 py-2 bg-slate-700 text-white rounded-lg disabled:opacity-50 hover:bg-slate-600 transition-colors"
+            >
+              Previous
+            </button>
+            <span className="px-4 py-2 bg-slate-800 text-white rounded-lg">
+              Page {page} of {totalPages}
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="px-4 py-2 bg-slate-700 text-white rounded-lg disabled:opacity-50 hover:bg-slate-600 transition-colors"
+            >
+              Next
+            </button>
+          </div>
+        )}
+      </div>
     </div>
+  );
+};
+
+const ProjectCard = ({ project, index, onRefresh }) => {
+  const [coverImage, setCoverImage] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    const fetchMedia = async () => {
+      try {
+        const mediaData = await getProjectMedia(project.id);
+        if (mediaData.results && mediaData.results.length > 0) {
+          // Find the first IMAGE type media
+          const imageItem = mediaData.results.find(m => m.type === "IMAGE") || mediaData.results[0];
+          setCoverImage(imageItem.file || imageItem.file_url);
+        }
+      } catch (err) {
+        console.error("Failed to fetch project media:", err);
+      }
+    };
+    fetchMedia();
+  }, [project.id]);
+
+  const handleSubmitReview = async () => {
+    if (!window.confirm("Are you sure you want to submit this project for review?")) return;
+
+    setSubmitting(true);
+    try {
+      await submitProjectForReview(project.id);
+      toast.success("Project submitted for review successfully!");
+      if (onRefresh) onRefresh();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Failed to submit project");
+      console.error("Submission error:", err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const statusConfig = {
+    DRAFT: {
+      bg: "bg-slate-500/20",
+      text: "text-slate-400",
+      border: "border-slate-500/30"
+    },
+    PENDING_REVIEW: {
+      bg: "bg-yellow-500/20",
+      text: "text-yellow-400",
+      border: "border-yellow-500/30"
+    },
+    APPROVED: {
+      bg: "bg-emerald-500/20",
+      text: "text-emerald-400",
+      border: "border-emerald-500/30"
+    },
+    REJECTED: {
+      bg: "bg-red-500/20",
+      text: "text-red-400",
+      border: "border-red-500/30"
+    },
+    NEEDS_CHANGES: {
+      bg: "bg-orange-500/20",
+      text: "text-orange-400",
+      border: "border-orange-500/30"
+    }
+  };
+
+  const status = statusConfig[project.status] || statusConfig.DRAFT;
+  const progress = project.total_shares > 0
+    ? ((project.shares_sold || 0) / project.total_shares) * 100
+    : 0;
+
+  const sharePrice = project.total_shares > 0
+    ? parseFloat(project.share_price || 0)
+    : 0;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05 }}
+      className="bg-slate-800/50 backdrop-blur-xl rounded-2xl border border-slate-700/50 hover:border-emerald-500/50 transition-all overflow-hidden group"
+    >
+      {/* Project Image */}
+      <div className="h-48 overflow-hidden relative">
+        <img
+          src={getMediaUrl(coverImage) || "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"}
+          alt={project.title}
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+        />
+        <div className="absolute top-4 right-4 z-10">
+          <span className={`px-3 py-1 rounded-full text-xs font-bold border whitespace-nowrap backdrop-blur-md ${status.bg} ${status.text} ${status.border}`}>
+            {project.status}
+          </span>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-6">
+        <div className="flex items-start justify-between mb-4">
+          <h3 className="text-xl font-bold text-white line-clamp-2 flex-1">
+            {project.title}
+          </h3>
+        </div>
+
+        <p className="text-slate-400 text-sm mb-4 line-clamp-2">
+          {project.description}
+        </p>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="bg-slate-700/30 p-3 rounded-lg">
+            <div className="flex items-center gap-1 text-gray-400 mb-1">
+              <DollarSign className="w-3 h-3" />
+              <span className="text-xs">Share Price</span>
+            </div>
+            <p className="text-white font-bold">
+              ${sharePrice.toFixed(2)}
+            </p>
+          </div>
+
+          <div className="bg-slate-700/30 p-3 rounded-lg">
+            <div className="flex items-center gap-1 text-gray-400 mb-1">
+              <Users className="w-3 h-3" />
+              <span className="text-xs">Total Shares</span>
+            </div>
+            <p className="text-white font-bold">
+              {(project.total_shares || 0).toLocaleString()}
+            </p>
+          </div>
+
+          <div className="bg-slate-700/30 p-3 rounded-lg">
+            <div className="flex items-center gap-1 text-gray-400 mb-1">
+              <TrendingUp className="w-3 h-3" />
+              <span className="text-xs">Value</span>
+            </div>
+            <p className="text-white font-bold text-sm">
+              ${parseFloat(project.total_project_value || 0).toLocaleString()}
+            </p>
+          </div>
+
+          <div className="bg-slate-700/30 p-3 rounded-lg">
+            <div className="flex items-center gap-1 text-gray-400 mb-1">
+              <Calendar className="w-3 h-3" />
+              <span className="text-xs">Duration</span>
+            </div>
+            <p className="text-white font-bold">
+              {project.duration_days || 0}d
+            </p>
+          </div>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="mb-4">
+          <div className="flex justify-between text-sm mb-2">
+            <span className="text-slate-400">Funding Progress</span>
+            <span className="text-white font-bold">{progress.toFixed(1)}%</span>
+          </div>
+          <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 1, delay: index * 0.05 }}
+              className="bg-gradient-to-r from-emerald-500 to-green-500 h-2 rounded-full"
+            />
+          </div>
+          <div className="flex justify-between text-xs text-slate-400 mt-1">
+            <span>{project.shares_sold || 0} sold</span>
+            <span>{project.remaining_shares || project.total_shares} left</span>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          <Link
+            to={`/developer/projects/${project.id}/edit`}
+            className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2"
+          >
+            <Edit className="w-4 h-4" />
+            Edit
+          </Link>
+
+          <Link
+            to={`/developer/projects/${project.id}/media`}
+            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-all flex items-center justify-center"
+            title="Manage Media"
+          >
+            <ImageIcon className="w-4 h-4" />
+          </Link>
+
+          {project.status === "DRAFT" && (
+            <button
+              onClick={handleSubmitReview}
+              disabled={submitting}
+              className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white rounded-lg transition-all flex items-center justify-center disabled:opacity-50"
+              title="Submit for Review"
+            >
+              {submitting ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+    </motion.div>
   );
 };
 

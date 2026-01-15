@@ -11,42 +11,53 @@ import {
   Home,
   FileText,
   Shield,
+  Users
 } from "lucide-react";
 import { useSelector } from "react-redux";
 
 const Sidebar = ({ role }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   // Safe access to Redux state
-  const { user } = useSelector((state) => state.auth || {});
+  const { user } = useSelector((state) => state.user || {});
 
   const isActive = (path) => location.pathname === path;
 
+  // STRICTLY DEFINED NAVIGATION ITEMS BY ROLE
   const navItems = {
-    developer: [
+    // 1. DEVELOPER ROLE
+    DEVELOPER: [
       { icon: <LayoutDashboard size={20} />, label: "Dashboard", path: "/developer" },
       { icon: <FolderKanban size={20} />, label: "My Projects", path: "/developer/projects" },
       { icon: <PlusCircle size={20} />, label: "Create Project", path: "/developer/projects/new" },
-      { icon: <Bell size={20} />, label: "Notifications", path: "/developer/notifications" },
-      { icon: <Settings size={20} />, label: "Account", path: "/developer/account" },
+      { icon: <Settings size={20} />, label: "Account", path: "/account" },
     ],
-    investor: [
-      { icon: <LayoutDashboard size={20} />, label: "Portfolio", path: "/investor" },
-      { icon: <DollarSign size={20} />, label: "Investments", path: "/investor/portfolio" },
-      { icon: <Briefcase size={20} />, label: "Marketplace", path: "/investor/projects" },
-      { icon: <Bell size={20} />, label: "Notifications", path: "/investor/notifications" },
-      { icon: <Settings size={20} />, label: "Account", path: "/investor/account" },
+
+    // 2. INVESTOR ROLE
+    INVESTOR: [
+      { icon: <LayoutDashboard size={20} />, label: "Dashboard", path: "/investor" },
+      { icon: <Briefcase size={20} />, label: "Marketplace", path: "/investor/browse" },
+      { icon: <DollarSign size={20} />, label: "My Investments", path: "/investor/my-investments" },
+      { icon: <Briefcase size={20} />, label: "Compare Projects", path: "/investor/compare" },
+      { icon: <Bell size={20} />, label: "Notifications", path: "/notifications" },
+      { icon: <Settings size={20} />, label: "Account", path: "/account" },
     ],
-    admin: [
+
+    // 3. ADMIN ROLE
+    ADMIN: [
       { icon: <LayoutDashboard size={20} />, label: "Dashboard", path: "/admin" },
       { icon: <FileText size={20} />, label: "Pending Projects", path: "/admin/pending-projects" },
+      { icon: <Users size={20} />, label: "User Management", path: "/admin/users" },
+      { icon: <Shield size={20} />, label: "Audit Logs", path: "/admin/audit-logs" },
       { icon: <Shield size={20} />, label: "Access Requests", path: "/admin/access-requests" },
-      { icon: <Settings size={20} />, label: "Account", path: "/admin/account" },
+      { icon: <Settings size={20} />, label: "Account", path: "/account" },
     ],
   };
 
-  const items = navItems[role] || navItems.developer;
+  // Safe fallback: If role is unrecognized, use an empty array or public links
+  // DO NOT default to developer links for security/UX reasons.
+  const items = navItems[role] || [];
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-slate-900 border-r border-slate-800 z-50 pt-6">
@@ -59,7 +70,10 @@ const Sidebar = ({ role }) => {
             </div>
             <div className="overflow-hidden">
               <h3 className="font-semibold text-white text-sm truncate">{user?.name || "User"}</h3>
-              <p className="text-xs text-slate-400 capitalize">{role || "Guest"}</p>
+              {/* Display role cleanly */}
+              <p className="text-xs text-slate-400 capitalize">
+                {role ? role.toLowerCase() : "Guest"}
+              </p>
             </div>
           </div>
           <button
@@ -71,23 +85,28 @@ const Sidebar = ({ role }) => {
         </div>
 
         <nav className="space-y-1">
-          {items.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all ${
-                isActive(item.path)
+          {items.length > 0 ? (
+            items.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all ${isActive(item.path)
                   ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-lg shadow-emerald-500/5"
                   : "text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent"
-              }`}
-            >
-              <span className="mr-3">{item.icon}</span>
-              {item.label}
-              {isActive(item.path) && (
-                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-              )}
-            </Link>
-          ))}
+                  }`}
+              >
+                <span className="mr-3">{item.icon}</span>
+                {item.label}
+                {isActive(item.path) && (
+                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                )}
+              </Link>
+            ))
+          ) : (
+            <div className="text-center text-slate-500 text-sm py-4">
+              No menu items available.
+            </div>
+          )}
         </nav>
       </div>
     </aside>

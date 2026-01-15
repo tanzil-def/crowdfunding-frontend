@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
+import { requestPasswordReset } from "../../services/api";
 
-export default function ForgotPassword() {
+const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -15,17 +15,10 @@ export default function ForgotPassword() {
     setLoading(true);
 
     try {
-      const response = await axios.post("/api/v1/auth/password-reset/", {
-        email,
-      });
-
-      setMessage(response.data.message || "Password reset link sent to your email!");
+      const response = await requestPasswordReset(email);
+      setMessage(response.message || "Password reset link sent to your email!");
     } catch (err) {
-      setError(
-        err.response?.data?.error ||
-          err.response?.data?.message ||
-          "Something went wrong. Please try again."
-      );
+      setError(err.response?.data?.error || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -33,7 +26,6 @@ export default function ForgotPassword() {
 
   return (
     <div className="min-h-screen relative flex items-center justify-center bg-black p-6 overflow-hidden font-sans">
-      {/* Background Image & Overlay */}
       <div className="absolute inset-0">
         <img
           src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80"
@@ -72,13 +64,12 @@ export default function ForgotPassword() {
             </label>
             <input
               type="email"
-              id="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
               placeholder="email@example.com"
-              className="w-full px-6 py-4 bg-slate-950/80 border border-slate-700 rounded-2xl text-gray-100 placeholder-gray-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 shadow-inner"
+              className="w-full px-6 py-4 bg-slate-950/80 border border-slate-700 rounded-2xl text-gray-100 placeholder-gray-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 shadow-inner disabled:opacity-50"
               autoComplete="email"
             />
           </div>
@@ -104,4 +95,6 @@ export default function ForgotPassword() {
       </div>
     </div>
   );
-}
+};
+
+export default ForgotPassword;

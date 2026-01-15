@@ -1,42 +1,75 @@
 import React from "react";
-import { createBrowserRouter, Outlet, Navigate } from "react-router-dom";
-
-// Layouts
+import { createBrowserRouter, Outlet } from "react-router-dom";
 import MasterLayout from "../pages/MasterLayout/MasterLayout";
 import PublicHeader from "../components/Header/PublicHeader";
 
-// Pages
+// ==========================
+// PUBLIC PAGES
+// ==========================
 import Home from "../pages/Home";
 import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
-import ForgotPassword from "../pages/auth/ForgotPassword";      // ← নতুন যোগ করা
+import ForgotPassword from "../pages/auth/ForgotPassword";
+import ResetPassword from "../pages/auth/ResetPassword";
+import VerifyEmail from "../pages/auth/VerifyEmail";
+
+// ==========================
+// DEVELOPER PAGES
+// ==========================
 import DeveloperDashboard from "../pages/developer/Dashboard";
 import MyProjects from "../pages/developer/MyProjects";
 import CreateProject from "../pages/developer/CreateProject";
 import EditProject from "../pages/developer/EditProject";
-import Account from "../pages/Account/Account";
-import NotificationCenter from "../pages/notifications/NotificationCenter";
+import SubmitProject from "../pages/developer/SubmitProject";
+import ProjectMedia from "../pages/developer/ProjectMedia";
+
+// ==========================
+// INVESTOR PAGES
+// ==========================
+import InvestorDashboard from "../pages/investor/Dashboard";
+import BrowseProjects from "../pages/investor/BrowseProjects";
+import ProjectDetail from "../pages/investor/ProjectDetail";
+import InvestPage from "../pages/investor/InvestPage";
 import Portfolio from "../pages/investor/Portfolio";
-import BuyNow from "../pages/BuyNow/BuyNow";
+import MyInvestments from "../pages/investor/MyInvestments";
+import Investments from "../pages/investor/Investments";
+import Wallet from "../pages/investor/Wallet";
+import Favorites from "../pages/investor/Favorites";
+import CompareProjects from "../pages/investor/CompareProjects";
+import Requests from "../pages/investor/Requests";
+
+// ==========================
+// ADMIN PAGES
+// ==========================
+import AdminDashboard from "../pages/admin/Dashboard";
 import PendingProjects from "../pages/admin/PendingProjects";
 import AccessRequestsQueue from "../pages/admin/AccessRequestsQueue";
+import Users from "../pages/admin/Users";
+import Payments from "../pages/admin/Payments";
+import AuditLogs from "../pages/admin/Auditlogs";
 
-// Public Layout Wrapper
+// ==========================
+// COMMON PAGES
+// ==========================
+import BuyNow from "../pages/BuyNow/BuyNow";
+import Account from "../pages/Account/Account";
+import NotificationCenter from "../pages/notifications/NotificationCenter";
+
+// ==========================
+// PUBLIC LAYOUT
+// ==========================
 const PublicLayout = () => (
-  <div className="min-h-screen bg-[#020617] selection:bg-emerald-500/30">
+  <>
     <PublicHeader />
     <Outlet />
-  </div>
+  </>
 );
 
+// ==========================
+// ROUTER
+// ==========================
 const router = createBrowserRouter([
-  // Redirect /dashboard to /developer
-  {
-    path: "/dashboard",
-    element: <Navigate to="/developer" replace />,
-  },
-
-  // Public Routes (এখানে Forgot Password যোগ করা হলো)
+  // -------- PUBLIC --------
   {
     path: "/",
     element: <PublicLayout />,
@@ -44,64 +77,70 @@ const router = createBrowserRouter([
       { index: true, element: <Home /> },
       { path: "login", element: <Login /> },
       { path: "register", element: <Register /> },
-      { path: "forgot-password", element: <ForgotPassword /> },   // ← এই লাইনটা যোগ করো
+      { path: "forgot-password", element: <ForgotPassword /> },
+      { path: "reset-password", element: <ResetPassword /> },
+      { path: "verify-email", element: <VerifyEmail /> },
     ],
   },
 
-  // Developer Routes
+  // -------- DEVELOPER --------
   {
     path: "/developer",
-    element: <MasterLayout role="developer" />,
+    element: <MasterLayout role="DEVELOPER" />,
     children: [
       { index: true, element: <DeveloperDashboard /> },
       { path: "projects", element: <MyProjects /> },
       { path: "projects/new", element: <CreateProject /> },
       { path: "projects/:id/edit", element: <EditProject /> },
-      { path: "notifications", element: <NotificationCenter /> },
-      { path: "account", element: <Account /> },
+      { path: "projects/:id/submit", element: <SubmitProject /> },
+      { path: "projects/:id/media", element: <ProjectMedia /> },
     ],
   },
 
-  // Investor Routes
+  // -------- INVESTOR --------
   {
     path: "/investor",
-    element: <MasterLayout role="investor" />,
+    element: <MasterLayout role="INVESTOR" />,
     children: [
-      { index: true, element: <Portfolio /> },
-      { path: "portfolio", element: <Portfolio /> },
+      { index: true, element: <InvestorDashboard /> },
+      { path: "browse", element: <BrowseProjects /> },
+      { path: "projects/:id", element: <ProjectDetail /> },
+      { path: "projects/:id/invest", element: <InvestPage /> },
       { path: "projects/:id/buynow", element: <BuyNow /> },
-      { path: "notifications", element: <NotificationCenter /> },
-      { path: "account", element: <Account /> },
+      { path: "portfolio", element: <Portfolio /> },
+      { path: "my-investments", element: <MyInvestments /> },
+      { path: "investments", element: <Investments /> },
+      { path: "wallet", element: <Wallet /> },
+      { path: "favorites", element: <Favorites /> },
+      { path: "compare", element: <CompareProjects /> },
+      { path: "requests", element: <Requests /> },
     ],
   },
 
-  // Admin Routes
+  // -------- ADMIN --------
   {
     path: "/admin",
-    element: <MasterLayout role="admin" />,
+    element: <MasterLayout role="ADMIN" />,
     children: [
-      { index: true, element: <PendingProjects /> },
+      { index: true, element: <AdminDashboard /> },
       { path: "pending-projects", element: <PendingProjects /> },
       { path: "access-requests", element: <AccessRequestsQueue /> },
-      { path: "account", element: <Account /> },
+      { path: "users", element: <Users /> },
+      { path: "payments", element: <Payments /> },
+      { path: "audit-logs", element: <AuditLogs /> },
     ],
   },
 
-  // 404 Page
+  // -------- COMMON AUTH --------
   {
-    path: "*",
-    element: (
-      <div className="min-h-screen bg-[#020617] flex flex-col items-center justify-center text-white p-4">
-        <h1 className="text-9xl font-black text-emerald-500/10">404</h1>
-        <h2 className="text-3xl font-bold -mt-10 mb-4">Oops! Page not found</h2>
-        <button
-          onClick={() => window.history.back()}
-          className="px-8 py-3 bg-emerald-600 rounded-xl font-bold"
-        >
-          Go Back
-        </button>
-      </div>
-    ),
+    path: "/account",
+    element: <MasterLayout />,
+    children: [{ index: true, element: <Account /> }],
+  },
+  {
+    path: "/notifications",
+    element: <MasterLayout />,
+    children: [{ index: true, element: <NotificationCenter /> }],
   },
 ]);
 

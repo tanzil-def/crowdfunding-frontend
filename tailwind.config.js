@@ -12,6 +12,8 @@ export default {
     
     extend: {
       colors: {
+        // New primary color added
+        primary: "#10b981", 
         sun: "#ffeb3b",
         light: {
           backgroundColor: "#fff",
