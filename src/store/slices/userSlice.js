@@ -1,15 +1,11 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-  user: {
-    name: 'Tanzil',
-    email: 'tanzil@example.com',
-    role: 'DEVELOPER'
-  },
-  isAuthenticated: true,
-  isUserLoggedIn: true,
-  role: 'DEVELOPER',
-  propertiesList: []  // Dummy array to avoid Header errors
+  user: null,
+  isAuthenticated: false,
+  isUserLoggedIn: false,
+  role: null,
+  propertiesList: []
 };
 
 const userSlice = createSlice({

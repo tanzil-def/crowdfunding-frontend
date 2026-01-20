@@ -1,44 +1,76 @@
-import { Swiper, SwiperSlide } from "swiper/react";
+import React from "react";
+import { NavLink } from "react-router-dom";
 
-import "swiper/css";
-import "swiper/css/zoom";
-import "swiper/css/navigation";
-import "swiper/css/pagination";
+const Sidebar = ({ role }) => {
+  const common = [
+    { name: "Dashboard", to: "" },
+    { name: "Notifications", to: "notifications" },
+    { name: "Account", to: "account" },
+  ];
 
-import { Zoom, Navigation, Pagination } from "swiper";
+  const developer = [
+    { name: "My Projects", to: "projects" },
+    { name: "Create Project", to: "projects/new" },
+  ];
 
-const Slider = ({ images, openSlider }) => {
+  const admin = [
+    { name: "Project Reviews", to: "pending-projects" },
+    { name: "Access Requests", to: "access-requests" },
+    { name: "Transactions", to: "transactions" },
+    { name: "Users", to: "users" },
+  ];
+
+  const investor = [{ name: "Portfolio", to: "portfolio" }];
+
+  let roleMenus = [];
+  if (role === "DEVELOPER") roleMenus = developer;
+  if (role === "ADMIN") roleMenus = admin;
+  if (role === "INVESTOR") roleMenus = investor;
+
   return (
-    <div className="fixed left-0 top-0 right-0 bottom-0 z-50 bg-dark-backgroundColor ">
-      <div
-        className="fixed top-0 right-0 px-8 py-2 m-4 z-50 text-xl font-bold border rounded-full cursor-pointer text-light-cardBgColor"
-        onClick={openSlider}
-      >
-        Close
-      </div>
-      <Swiper
-        style={{
-          "--swiper-navigation-color": "#fff",
-          "--swiper-pagination-color": "#fff",
-        }}
-        zoom={true}
-        navigation={true}
-        pagination={{
-          clickable: true,
-        }}
-        modules={[Zoom, Navigation, Pagination]}
-        className="mySwiper p-16 flex"
-      >
-        {images?.map((item) => (
-          <SwiperSlide>
-            <div className="swiper-zoom-container mx-10">
-              <img src={item} />
-            </div>
-          </SwiperSlide>
+    <aside className="fixed left-0 top-0 h-screen w-64 bg-slate-900 border-r border-slate-800">
+      <div className="p-6 text-xl font-black text-white">CrowdTrade Pro</div>
+
+      <nav className="px-4 space-y-2">
+        {common.map((item) => (
+          <NavLink
+            key={item.name}
+            to={item.to}
+            end
+            className={({ isActive }) =>
+              `block px-4 py-3 rounded-xl text-sm font-semibold ${
+                isActive
+                  ? "bg-emerald-600 text-white"
+                  : "text-slate-400 hover:bg-slate-800"
+              }`
+            }
+          >
+            {item.name}
+          </NavLink>
         ))}
-      </Swiper>
-    </div>
+
+        <div className="mt-6 px-4 text-xs text-slate-500 uppercase">
+          {role}
+        </div>
+
+        {roleMenus.map((item) => (
+          <NavLink
+            key={item.name}
+            to={item.to}
+            className={({ isActive }) =>
+              `block px-4 py-3 rounded-xl text-sm font-semibold ${
+                isActive
+                  ? "bg-emerald-600 text-white"
+                  : "text-slate-400 hover:bg-slate-800"
+              }`
+            }
+          >
+            {item.name}
+          </NavLink>
+        ))}
+      </nav>
+    </aside>
   );
 };
 
-export default Slider;
+export default Sidebar;
