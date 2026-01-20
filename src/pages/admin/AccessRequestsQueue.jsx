@@ -36,9 +36,7 @@ const AccessRequestsQueue = () => {
       if (filter !== "ALL") {
         params.status = filter;
       }
-      const res = await adminService.getAccessRequests(params);
-      // Handle potential { success: true, data: { ... } } wrapper
-      const data = res.data || res;
+      const data = await adminService.getAccessRequests(params);
       setRequests(data.results || []);
       setTotalPages(Math.ceil((data.count || 0) / 10));
     } catch (err) {

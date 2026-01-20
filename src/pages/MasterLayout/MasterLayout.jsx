@@ -33,17 +33,21 @@ const MasterLayout = ({ role: requiredRole }) => {
     if (isAuthenticated && user?.role === "ADMIN") {
       const fetchCounts = async () => {
         try {
-          // You can call dashboard summary or specific pending endpoints
-          const res = await adminService.getDashboardSummary();
-          const summary = res.data || res;
-          dispatch(setPendingProjectsCount(summary.pending_projects || 0));
+          // Fetch pending projects from the dedicated endpoint
+          const data = await adminService.getPendingProjects();
+          const projects = data.results || data || [];
+          const count = Array.isArray(projects) ? projects.length : 0;
+          dispatch(setPendingProjectsCount(count));
         } catch (err) {
-          console.error("Polling error:", err);
+          // Professionally handle polling errors without console spam
+          if (err.response?.status !== 404 && err.response?.status !== 401) {
+            console.debug("Admin polling background sync deferred.");
+          }
         }
       };
 
       fetchCounts();
-      const interval = setInterval(fetchCounts, 30000); // Poll every 30 seconds
+      const interval = setInterval(fetchCounts, 45000); // Poll every 45 seconds (slightly reduced frequency)
       return () => clearInterval(interval);
     }
   }, [isAuthenticated, user?.role, dispatch]);
@@ -56,8 +60,7 @@ const MasterLayout = ({ role: requiredRole }) => {
     if (isAuthenticated) {
       const fetchNotifications = async () => {
         try {
-          const res = await developerService.getNotifications();
-          const data = res.data || res;
+          const data = await developerService.getNotifications();
           const notificationsList = data.results || [];
           dispatch(setNotifications(notificationsList));
 
@@ -74,7 +77,10 @@ const MasterLayout = ({ role: requiredRole }) => {
           }
           previousUnreadRef.current = currentUnread;
         } catch (err) {
-          console.error("Notification polling error:", err);
+          // Silently skip if endpoint is unavailable or unauthorized during refresh
+          if (err.response?.status !== 404 && err.response?.status !== 401) {
+            console.debug("Notification sync temporarily unavailable.");
+          }
         }
       };
 

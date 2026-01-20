@@ -14,6 +14,7 @@ const EditProject = () => {
 
   const [formData, setFormData] = useState({
     title: "",
+    short_description: "",
     description: "",
     category: "",
     duration_days: 30,
@@ -25,14 +26,18 @@ const EditProject = () => {
   });
 
   const categories = [
-    "Technology",
-    "Healthcare",
-    "Finance",
-    "Real Estate",
-    "Education",
-    "Energy",
-    "Agriculture",
-    "Entertainment",
+    "TECHNOLOGY",
+    "REAL_ESTATE",
+    "ENERGY",
+    "HEALTHCARE",
+    "AGRICULTURE",
+    "MANUFACTURING",
+    "RETAIL",
+    "SERVICES",
+    "FINANCE",
+    "EDUCATION",
+    "ENTERTAINMENT",
+    "OTHER",
   ];
 
   useEffect(() => {
@@ -47,13 +52,14 @@ const EditProject = () => {
       // Set form data with correct field names
       setFormData({
         title: data.title || "",
+        short_description: data.short_description || "",
         description: data.description || "",
         category: data.category || "",
         duration_days: data.duration_days || 30,
-        total_project_value: data.total_project_value || "",
+        total_project_value: data.total_value || "",
         total_shares: data.total_shares || "",
-        restricted_fields: data.restricted_fields || "",
-        is_3d_restricted: data.is_3d_restricted || false,
+        restricted_fields: data.financial_projections || "",
+        is_3d_restricted: !data.is_3d_public,
         status: data.status || "DRAFT"
       });
     } catch (err) {
@@ -80,18 +86,25 @@ const EditProject = () => {
       // Only send fields that can be updated
       const updateData = {
         title: formData.title,
+        short_description: formData.short_description || formData.description.substring(0, 150),
         description: formData.description,
         category: formData.category,
         duration_days: parseInt(formData.duration_days),
-        restricted_fields: formData.restricted_fields,
-        is_3d_restricted: formData.is_3d_restricted,
+        financial_projections: formData.restricted_fields,
+        has_restricted_fields: !!formData.restricted_fields,
+        is_3d_public: !formData.is_3d_restricted,
       };
 
+      console.log("Updating Project Data:", updateData);
       await developerService.updateProject(id, updateData);
       toast.success("Project updated successfully!");
       navigate("/developer/projects");
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Failed to update project");
+      console.error("Project Update Error Details:", err.response?.data);
+      const errorMsg = err.response?.data?.detail ||
+        (err.response?.data && typeof err.response.data === 'object' ? Object.entries(err.response.data).map(([k, v]) => `${k}: ${v}`).join(', ') : null) ||
+        "Failed to update project";
+      toast.error(errorMsg);
     } finally {
       setSaving(false);
     }
@@ -202,6 +215,20 @@ const EditProject = () => {
                 onChange={handleChange}
                 disabled={!canEdit}
                 className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition-all"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-slate-300 mb-2">Short Description *</label>
+              <input
+                name="short_description"
+                value={formData.short_description}
+                onChange={handleChange}
+                disabled={!canEdit}
+                placeholder="A brief summary (max 500 chars)"
+                className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition-all"
+                maxLength="500"
                 required
               />
             </div>

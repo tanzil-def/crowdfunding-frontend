@@ -12,6 +12,7 @@ const CreateProject = () => {
 
   const [formData, setFormData] = useState({
     title: "",
+    short_description: "",
     description: "",
     category: "",
     duration_days: 30,
@@ -27,14 +28,15 @@ const CreateProject = () => {
   });
 
   const categories = [
-    "Technology",
-    "Healthcare",
-    "Finance",
-    "Real Estate",
-    "Education",
-    "Energy",
-    "Agriculture",
-    "Entertainment",
+    "TECHNOLOGY",
+    "REAL_ESTATE",
+    "ENERGY",
+    "HEALTHCARE",
+    "AGRICULTURE",
+    "MANUFACTURING",
+    "RETAIL",
+    "SERVICES",
+    "OTHER",
   ];
 
   const handleChange = (e) => {
@@ -60,9 +62,24 @@ const CreateProject = () => {
     setLoading(true);
 
     try {
-      const response = await developerService.createProject(formData);
-      // Access id from nested data field
-      const projectId = response.data.id;
+      const submitData = {
+        title: formData.title || "Untitled Project",
+        short_description: formData.short_description || formData.description?.substring(0, 150) || "No description provided",
+        description: formData.description || "No description provided",
+        category: formData.category || "OTHER",
+        duration_days: parseInt(formData.duration_days) || 30,
+        total_value: parseFloat(formData.total_project_value) || 0,
+        total_shares: parseInt(formData.total_shares) || 1,
+        financial_projections: formData.restricted_fields || "",
+        has_restricted_fields: !!formData.restricted_fields,
+        has_3d_model: !!files.model_3d,
+        is_3d_public: !formData.is_3d_restricted,
+      };
+
+      console.log("Submitting Project Data:", submitData);
+      const response = await developerService.createProject(submitData);
+      // Access id directly from response (due to service unwrapping)
+      const projectId = response.id || response.data?.id;
 
       if (!projectId) {
         throw new Error("Failed to get project ID from response");
@@ -90,7 +107,11 @@ const CreateProject = () => {
       toast.success("Project created as draft!");
       navigate("/developer/projects");
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Failed to create project");
+      console.error("Project Creation Error Details:", err.response?.data);
+      const errorMsg = err.response?.data?.detail ||
+        (err.response?.data && typeof err.response.data === 'object' ? Object.entries(err.response.data).map(([k, v]) => `${k}: ${v}`).join(', ') : null) ||
+        "Failed to create project";
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -105,9 +126,25 @@ const CreateProject = () => {
     setLoading(true);
 
     try {
-      const response = await developerService.createProject(formData);
-      // Access id from nested data field
-      const projectId = response.data.id;
+      const submitData = {
+        title: formData.title,
+        short_description: formData.short_description || formData.description?.substring(0, 150),
+        description: formData.description,
+        category: formData.category,
+        duration_days: parseInt(formData.duration_days) || 30,
+        total_value: parseFloat(formData.total_project_value) || 0,
+        total_shares: parseInt(formData.total_shares) || 1,
+        financial_projections: formData.restricted_fields || "",
+        has_restricted_fields: !!formData.restricted_fields,
+        has_3d_model: !!files.model_3d,
+        is_3d_public: !formData.is_3d_restricted,
+      };
+
+      console.log("Submitting and Publishing Project Data:", submitData);
+      const response = await developerService.createProject(submitData);
+
+      // Handle potential response structure differences (service might return data directly or wrapped)
+      const projectId = response.id || response.data?.id || (response.data && response.data.id);
 
       if (!projectId) {
         throw new Error("Failed to get project ID from response");
@@ -184,6 +221,19 @@ const CreateProject = () => {
                   onChange={handleChange}
                   placeholder="Enter a compelling project title"
                   className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-300 mb-2">Short Description *</label>
+                <input
+                  name="short_description"
+                  value={formData.short_description}
+                  onChange={handleChange}
+                  placeholder="A brief summary (max 500 chars)"
+                  className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                  maxLength="500"
                   required
                 />
               </div>

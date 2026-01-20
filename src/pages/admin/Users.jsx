@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Users as UsersIcon,
   Search,
-  Filter,
   Mail,
   Calendar,
   Shield,
@@ -13,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import adminService from "../../api/adminService";
 
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -25,8 +25,6 @@ const Users = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Note: This endpoint is not in your API list, but based on SRS requirements
-  // You'll need to implement GET /api/v1/admin/users/ in your backend
   useEffect(() => {
     fetchUsers();
   }, [page, search, roleFilter, verificationFilter]);
@@ -34,58 +32,20 @@ const Users = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      // Mock data - replace with actual API call when endpoint is available
-      const mockUsers = [
-        {
-          id: "1",
-          email: "admin@example.com",
-          full_name: "Admin User",
-          role: "ADMIN",
-          is_email_verified: true,
-          date_joined: "2025-01-01T10:00:00Z",
-        },
-        {
-          id: "2",
-          email: "developer@example.com",
-          full_name: "John Developer",
-          role: "DEVELOPER",
-          is_email_verified: true,
-          date_joined: "2025-01-05T14:30:00Z",
-        },
-        {
-          id: "3",
-          email: "investor@example.com",
-          full_name: "Jane Investor",
-          role: "INVESTOR",
-          is_email_verified: false,
-          date_joined: "2025-01-10T09:15:00Z",
-        },
-      ];
+      const params = {
+        page,
+        page_size: 15,
+      };
+      if (search) params.search = search;
+      if (roleFilter !== "ALL") params.role = roleFilter;
+      if (verificationFilter === "VERIFIED") params.is_verified = "true";
+      else if (verificationFilter === "UNVERIFIED") params.is_verified = "false";
 
-      // Filter based on search and filters
-      let filtered = mockUsers;
-      
-      if (search) {
-        filtered = filtered.filter(
-          (u) =>
-            u.email.toLowerCase().includes(search.toLowerCase()) ||
-            u.full_name.toLowerCase().includes(search.toLowerCase())
-        );
-      }
-
-      if (roleFilter !== "ALL") {
-        filtered = filtered.filter((u) => u.role === roleFilter);
-      }
-
-      if (verificationFilter === "VERIFIED") {
-        filtered = filtered.filter((u) => u.is_email_verified);
-      } else if (verificationFilter === "UNVERIFIED") {
-        filtered = filtered.filter((u) => !u.is_email_verified);
-      }
-
-      setUsers(filtered);
-      setTotalPages(1);
+      const data = await adminService.getUsers(params);
+      setUsers(data.results || []);
+      setTotalPages(Math.ceil((data.count || 0) / 15));
     } catch (err) {
+      console.error("Error fetching users:", err);
       toast.error("Failed to load users");
     } finally {
       setLoading(false);
@@ -165,28 +125,26 @@ const Users = () => {
               <button
                 key={role}
                 onClick={() => setRoleFilter(role)}
-                className={`px-6 py-3 rounded-xl font-semibold whitespace-nowrap transition-all ${
-                  roleFilter === role
-                    ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg shadow-indigo-500/50"
-                    : "bg-slate-700/50 text-gray-300 hover:bg-slate-700"
-                }`}
+                className={`px-6 py-3 rounded-xl font-semibold whitespace-nowrap transition-all ${roleFilter === role
+                  ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg shadow-indigo-500/50"
+                  : "bg-slate-700/50 text-gray-300 hover:bg-slate-700"
+                  }`}
               >
                 {role}
               </button>
             ))}
-            
+
             <div className="border-l border-slate-700 mx-2"></div>
-            
+
             {/* Verification Filter */}
             {["ALL", "VERIFIED", "UNVERIFIED"].map((status) => (
               <button
                 key={status}
                 onClick={() => setVerificationFilter(status)}
-                className={`px-6 py-3 rounded-xl font-semibold whitespace-nowrap transition-all ${
-                  verificationFilter === status
-                    ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/50"
-                    : "bg-slate-700/50 text-gray-300 hover:bg-slate-700"
-                }`}
+                className={`px-6 py-3 rounded-xl font-semibold whitespace-nowrap transition-all ${verificationFilter === status
+                  ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/50"
+                  : "bg-slate-700/50 text-gray-300 hover:bg-slate-700"
+                  }`}
               >
                 {status}
               </button>
@@ -290,84 +248,71 @@ const Users = () => {
           </div>
         )}
 
-        {/* Note about API */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-6 bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 flex items-start gap-3"
-        >
-          <Shield className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-blue-400 font-semibold text-sm mb-1">
-              Note: Backend Integration Required
-            </p>
-            <p className="text-gray-400 text-xs">
-              Currently showing mock data. Implement GET /api/v1/admin/users/ endpoint in your backend for full functionality.
-            </p>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* User Detail Modal */}
-      {showDetailModal && selectedUser && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-          onClick={() => setShowDetailModal(false)}
-        >
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            onClick={(e) => e.stopPropagation()}
-            className="bg-slate-800 border border-slate-700 rounded-2xl p-8 max-w-2xl w-full"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-white">User Details</h2>
-              <button
+        {/* User Detail Modal */}
+        <AnimatePresence>
+          {showDetailModal && selectedUser && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-black/80 backdrop-blur-sm"
                 onClick={() => setShowDetailModal(false)}
-                className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+              />
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                className="relative bg-slate-800 border border-slate-700 rounded-3xl p-8 max-w-2xl w-full shadow-2xl overflow-hidden"
               >
-                <X className="w-5 h-5 text-gray-400" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div className="bg-slate-700/30 rounded-xl p-4">
-                <p className="text-gray-400 text-sm mb-1">Full Name</p>
-                <p className="text-white text-lg font-semibold">{selectedUser.full_name}</p>
-              </div>
-              
-              <div className="bg-slate-700/30 rounded-xl p-4">
-                <p className="text-gray-400 text-sm mb-1">Email</p>
-                <p className="text-white text-lg font-semibold">{selectedUser.email}</p>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-slate-700/30 rounded-xl p-4">
-                  <p className="text-gray-400 text-sm mb-1">Role</p>
-                  <p className="text-white text-lg font-semibold">{selectedUser.role}</p>
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-3xl font-bold text-white">User Details</h2>
+                  <button
+                    onClick={() => setShowDetailModal(false)}
+                    className="p-3 hover:bg-slate-700 rounded-xl transition-colors"
+                  >
+                    <X className="w-6 h-6 text-gray-400" />
+                  </button>
                 </div>
-                <div className="bg-slate-700/30 rounded-xl p-4">
-                  <p className="text-gray-400 text-sm mb-1">Email Status</p>
-                  <p className={`text-lg font-semibold ${selectedUser.is_email_verified ? 'text-green-400' : 'text-red-400'}`}>
-                    {selectedUser.is_email_verified ? 'Verified' : 'Unverified'}
-                  </p>
-                </div>
-              </div>
 
-              <div className="bg-slate-700/30 rounded-xl p-4">
-                <p className="text-gray-400 text-sm mb-1">Date Joined</p>
-                <p className="text-white text-lg font-semibold">
-                  {new Date(selectedUser.date_joined).toLocaleString()}
-                </p>
-              </div>
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-slate-700/30 rounded-2xl p-5 border border-slate-700/50">
+                      <p className="text-gray-400 text-sm mb-1 uppercase tracking-wider font-semibold">Full Name</p>
+                      <p className="text-white text-xl font-bold">{selectedUser.full_name}</p>
+                    </div>
+
+                    <div className="bg-slate-700/30 rounded-2xl p-5 border border-slate-700/50">
+                      <p className="text-gray-400 text-sm mb-1 uppercase tracking-wider font-semibold">Email</p>
+                      <p className="text-white text-xl font-bold truncate">{selectedUser.email}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-slate-700/30 rounded-2xl p-5 border border-slate-700/50">
+                      <p className="text-gray-400 text-sm mb-1 uppercase tracking-wider font-semibold">Role</p>
+                      <div className="mt-1">{getRoleBadge(selectedUser.role)}</div>
+                    </div>
+                    <div className="bg-slate-700/30 rounded-2xl p-5 border border-slate-700/50">
+                      <p className="text-gray-400 text-sm mb-1 uppercase tracking-wider font-semibold">Email Status</p>
+                      <p className={`text-xl font-bold ${selectedUser.is_email_verified ? 'text-green-400' : 'text-red-400'}`}>
+                        {selectedUser.is_email_verified ? 'Verified' : 'Unverified'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-700/30 rounded-2xl p-5 border border-slate-700/50">
+                    <p className="text-gray-400 text-sm mb-1 uppercase tracking-wider font-semibold">Date Joined</p>
+                    <p className="text-white text-xl font-bold">
+                      {new Date(selectedUser.date_joined).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
             </div>
-          </motion.div>
-        </motion.div>
-      )}
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 };

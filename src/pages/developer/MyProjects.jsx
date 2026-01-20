@@ -34,9 +34,7 @@ const MyProjects = () => {
         params.status = filter;
       }
 
-      const res = await developerService.getMyProjects(params);
-      // Handle potential { success: true, data: { ... } } wrapper
-      const data = res.data || res;
+      const data = await developerService.getMyProjects(params);
       setProjects(data.results || []);
       setTotalPages(Math.ceil((data.count || 0) / 12));
     } catch (error) {

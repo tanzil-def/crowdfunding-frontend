@@ -23,9 +23,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await authService.login(email, password);
-      // Backend might return { access, refresh } or { data: { access, refresh } }
-      const data = response.data || response;
+      const data = await authService.login(email, password);
       const { access, refresh } = data;
 
       if (!access) {
@@ -58,8 +56,34 @@ const Login = () => {
     }
   };
 
-  const handleGoogleLogin = () => {
-    console.log("Redirecting to Google Auth...");
+  const handleGoogleLogin = async (googleToken) => {
+    setLoading(true);
+    setError("");
+    try {
+      // In a real scenario, this would be called by the Google OAuth component callback
+      // For now, we simulate the token exchange
+      const data = await authService.googleLogin(googleToken || "google-mock-token");
+      const { access, refresh } = data;
+
+      localStorage.setItem("accessToken", access);
+      localStorage.setItem("refreshToken", refresh);
+
+      const userProfile = await authService.getProfile();
+      dispatch(reduxLogin(userProfile));
+      localStorage.setItem("user", JSON.stringify(userProfile));
+
+      const role = userProfile.role;
+      if (role === "ADMIN") navigate("/admin");
+      else if (role === "DEVELOPER") navigate("/developer");
+      else if (role === "INVESTOR") navigate("/investor");
+      else navigate("/");
+
+    } catch (err) {
+      console.error("Google Login failed:", err);
+      setError("Google authentication failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

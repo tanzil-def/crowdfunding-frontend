@@ -33,9 +33,7 @@ const PendingProjects = () => {
   const fetchPendingProjects = async () => {
     try {
       setLoading(true);
-      const res = await adminService.getPendingProjects({ page, page_size: 10 });
-      // Handle potential { success: true, data: { ... } } wrapper
-      const data = res.data || res;
+      const data = await adminService.getPendingProjects({ page, page_size: 10 });
       setProjects(data.results || []);
       setTotalPages(Math.ceil((data.count || 0) / 10));
     } catch (err) {

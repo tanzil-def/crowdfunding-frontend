@@ -49,7 +49,18 @@ const BrowseProjects = () => {
 
   useEffect(() => {
     fetchProjects();
+    fetchFavorites();
   }, [page, search, category, sortBy]);
+
+  const fetchFavorites = async () => {
+    try {
+      const data = await investorService.getFavorites({ page_size: 100 });
+      const favSet = new Set((data.results || []).map(f => f.project));
+      setFavorites(favSet);
+    } catch (err) {
+      console.error("Failed to fetch favorites:", err);
+    }
+  };
 
   const fetchProjects = async () => {
     try {
@@ -62,9 +73,7 @@ const BrowseProjects = () => {
       if (search) params.search = search;
       if (category && category !== "All") params.category = category;
 
-      const res = await investorService.browseProjects(params);
-      // Handle potential { success: true, data: { ... } } wrapper
-      const data = res.data || res;
+      const data = await investorService.browseProjects(params);
       setProjects(data.results || []);
       setTotalPages(Math.ceil((data.count || 0) / 12));
     } catch (err) {
@@ -78,20 +87,33 @@ const BrowseProjects = () => {
   const handleToggleFavorite = async (project) => {
     try {
       if (favorites.has(project.id)) {
-        await investorService.removeFromFavorites(project.favorite_id);
-        setFavorites((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(project.id);
-          return newSet;
-        });
-        toast.success("Removed from favorites");
+        // We need the favorite ID to remove it. 
+        // If we only have the project ID in the set, we might need to find the fav record.
+        const favsRaw = await investorService.getFavorites({ page_size: 100 });
+        const favRecord = (favsRaw.results || []).find(f => f.project === project.id);
+
+        if (favRecord) {
+          await investorService.removeFromFavorites(favRecord.id);
+          setFavorites((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(project.id);
+            return newSet;
+          });
+          toast.success("Removed from favorites");
+        }
       } else {
         await investorService.addToFavorites(project.id);
         setFavorites((prev) => new Set(prev).add(project.id));
         toast.success("Added to favorites");
       }
     } catch (err) {
-      toast.error("Failed to update favorites");
+      if (err.response?.status === 409) {
+        // Already a favorite, just sync state
+        setFavorites((prev) => new Set(prev).add(project.id));
+        toast.success("Added to favorites");
+      } else {
+        toast.error("Failed to update favorites");
+      }
     }
   };
 

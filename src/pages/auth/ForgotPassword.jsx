@@ -15,7 +15,7 @@ const ForgotPassword = () => {
     setLoading(true);
 
     try {
-      const response = await authService.requestPasswordReset(email);
+      const response = await authService.forgotPassword(email);
       setMessage(response.message || "Password reset link sent to your email!");
     } catch (err) {
       setError(err.response?.data?.error || "Something went wrong. Please try again.");

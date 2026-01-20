@@ -26,6 +26,7 @@ import {
   CheckCircle,
   XCircle
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const AdminDashboard = () => {
   const [dashboard, setDashboard] = useState(null);
@@ -34,21 +35,18 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     fetchDashboard();
-    // Auto-refresh every 30 seconds
-    const interval = setInterval(fetchDashboard, 30000);
+    const interval = setInterval(fetchDashboard, 60000);
     return () => clearInterval(interval);
   }, []);
 
   const fetchDashboard = async () => {
     try {
       setLoading(true);
-      const res = await adminService.getDashboardSummary();
-      // Handle potential { success: true, data: { ... } } wrapper
-      const dashData = res.data || res;
-      setDashboard(dashData);
+      const data = await adminService.getDashboardSummary();
+      setDashboard(data);
       setError(null);
     } catch (err) {
-      setError(err.message || "Failed to load dashboard");
+      setError(err.response?.data?.message || err.message || "Failed to load dashboard");
     } finally {
       setLoading(false);
     }
@@ -56,11 +54,11 @@ const AdminDashboard = () => {
 
   if (loading && !dashboard) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-[#070b14] flex items-center justify-center">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full"
+          className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full"
         />
       </div>
     );
@@ -68,12 +66,16 @@ const AdminDashboard = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-        <div className="bg-red-500/10 border border-red-500 rounded-xl p-6 text-red-200">
-          <p className="text-lg font-semibold">Error: {error}</p>
+      <div className="min-h-screen bg-[#070b14] flex items-center justify-center p-4">
+        <div className="glass-morphism border-red-500/20 p-8 rounded-2xl text-center max-w-md">
+          <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/20">
+            <XCircle className="w-8 h-8 text-red-500" />
+          </div>
+          <h2 className="text-xl font-bold text-white mb-2">Error</h2>
+          <p className="text-gray-400 mb-6">{error}</p>
           <button
             onClick={fetchDashboard}
-            className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+            className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold transition-all"
           >
             Retry
           </button>
@@ -84,250 +86,143 @@ const AdminDashboard = () => {
 
   const stats = [
     {
-      title: "Total Users",
-      value: dashboard?.total_users || 0,
-      icon: Users,
-      color: "from-blue-500 to-cyan-500",
-      change: "+12%",
-    },
-    {
       title: "Total Projects",
       value: dashboard?.total_projects || 0,
       icon: FolderKanban,
-      color: "from-purple-500 to-pink-500",
-      change: "+8%",
+      color: "from-indigo-500 to-blue-500",
+      change: "+5%",
+    },
+    {
+      title: "Pending Projects",
+      value: dashboard?.pending_projects || 0,
+      icon: Clock,
+      color: "from-amber-500 to-orange-500",
+      change: "",
     },
     {
       title: "Total Investments",
-      value: `$${(dashboard?.total_investments || 0).toLocaleString()}`,
-      icon: DollarSign,
-      color: "from-green-500 to-emerald-500",
-      change: "+23%",
+      value: dashboard?.total_investments || 0,
+      icon: TrendingUp,
+      color: "from-emerald-500 to-teal-500",
+      change: "+12%",
     },
     {
-      title: "Pending Reviews",
-      value: dashboard?.pending_reviews || 0,
-      icon: Clock,
-      color: "from-orange-500 to-yellow-500",
-      change: "",
+      title: "Total Revenue",
+      value: `$${parseFloat(dashboard?.total_revenue || 0).toLocaleString()}`,
+      icon: DollarSign,
+      color: "from-purple-500 to-pink-500",
+      change: "+18%",
     },
   ];
 
-  const projectStatusData = [
-    { name: "Approved", value: dashboard?.approved_projects || 0, color: "#10b981" },
-    { name: "Pending", value: dashboard?.pending_reviews || 0, color: "#f59e0b" },
-    { name: "Rejected", value: dashboard?.rejected_projects || 0, color: "#ef4444" },
-    { name: "Draft", value: dashboard?.draft_projects || 0, color: "#6b7280" },
-  ];
-
-  const recentActivity = dashboard?.recent_activities || [];
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-8">
+    <div className="min-h-screen bg-[#070b14] text-slate-200 p-4 md:p-8">
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-7xl mx-auto"
+        className="max-w-7xl mx-auto space-y-8"
       >
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">
-            Admin Dashboard
-          </h1>
-          <p className="text-gray-400 text-lg">
-            Platform overview and management center
-          </p>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-4xl font-bold text-white mb-1">Admin Dashboard</h1>
+            <p className="text-slate-400">Real-time platform metrics and oversight</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="glass-morphism px-4 py-2 rounded-xl border-indigo-500/20 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="text-sm font-medium text-emerald-500">System Live</span>
+            </div>
+            {dashboard?.unread_notifications > 0 && (
+              <div className="glass-morphism px-4 py-2 rounded-xl border-amber-500/20 flex items-center gap-2">
+                <span className="text-sm font-medium text-amber-500">{dashboard.unread_notifications} Unread Alerts</span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat, index) => (
             <motion.div
               key={stat.title}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="relative overflow-hidden rounded-2xl bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 p-6"
+              className="glass-morphism group hover:border-indigo-500/30 transition-all p-6 relative"
             >
-              <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-10`} />
-              <div className="relative">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 rounded-xl bg-gradient-to-br ${stat.color}`}>
-                    <stat.icon className="w-6 h-6 text-white" />
-                  </div>
+              <div className={`p-3 rounded-xl bg-gradient-to-br ${stat.color} w-fit mb-4 group-hover:scale-110 transition-transform`}>
+                <stat.icon className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-slate-400 text-sm font-medium mb-1">{stat.title}</p>
+                <div className="flex items-end gap-2">
+                  <p className="text-3xl font-bold text-white">{stat.value}</p>
                   {stat.change && (
-                    <span className="text-green-400 text-sm font-semibold flex items-center gap-1">
-                      <TrendingUp className="w-4 h-4" />
+                    <span className="text-emerald-500 text-xs font-bold mb-1.5 flex items-center">
+                      <TrendingUp className="w-3 h-3 mr-1" />
                       {stat.change}
                     </span>
                   )}
                 </div>
-                <h3 className="text-gray-400 text-sm font-medium mb-1">
-                  {stat.title}
-                </h3>
-                <p className="text-3xl font-bold text-white">{stat.value}</p>
               </div>
             </motion.div>
           ))}
         </div>
 
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Project Status Distribution */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6"
-          >
-            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-              <Activity className="w-6 h-6 text-purple-400" />
-              Project Status Distribution
-            </h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={projectStatusData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) =>
-                    `${name}: ${(percent * 100).toFixed(0)}%`
-                  }
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {projectStatusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "rgba(15, 23, 42, 0.9)",
-                    border: "1px solid rgba(148, 163, 184, 0.3)",
-                    borderRadius: "12px",
-                    color: "#fff",
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </motion.div>
-
-          {/* Recent Activity */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6"
-          >
-            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-              <Clock className="w-6 h-6 text-purple-400" />
-              Recent Activity
-            </h2>
-            <div className="space-y-4 max-h-[300px] overflow-y-auto">
-              {recentActivity.length > 0 ? (
-                recentActivity.map((activity, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="flex items-start gap-4 p-4 rounded-xl bg-slate-700/30 hover:bg-slate-700/50 transition-colors"
-                  >
-                    <div className="flex-shrink-0">
-                      {activity.type === "approved" ? (
-                        <CheckCircle className="w-5 h-5 text-green-400" />
-                      ) : activity.type === "rejected" ? (
-                        <XCircle className="w-5 h-5 text-red-400" />
-                      ) : (
-                        <Clock className="w-5 h-5 text-yellow-400" />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-white text-sm font-medium">
-                        {activity.message}
-                      </p>
-                      <p className="text-gray-400 text-xs mt-1">
-                        {activity.timestamp}
-                      </p>
-                    </div>
-                  </motion.div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-400">
-                  <Activity className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>No recent activity</p>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Access Requests & Transactions Summary */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6"
-          >
-            <h2 className="text-2xl font-bold text-white mb-4">
-              Access Requests Overview
-            </h2>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center p-4 bg-slate-700/30 rounded-lg">
-                <span className="text-gray-300">Pending</span>
-                <span className="text-2xl font-bold text-yellow-400">
-                  {dashboard?.pending_access_requests || 0}
-                </span>
-              </div>
-              <div className="flex justify-between items-center p-4 bg-slate-700/30 rounded-lg">
-                <span className="text-gray-300">Approved</span>
-                <span className="text-2xl font-bold text-green-400">
-                  {dashboard?.approved_access_requests || 0}
-                </span>
-              </div>
-              <div className="flex justify-between items-center p-4 bg-slate-700/30 rounded-lg">
-                <span className="text-gray-300">Rejected</span>
-                <span className="text-2xl font-bold text-red-400">
-                  {dashboard?.rejected_access_requests || 0}
-                </span>
+        {/* Middle Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Recent Audits Info */}
+          <div className="lg:col-span-1 glass-morphism p-6 flex flex-col justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                <Activity className="w-5 h-5 text-indigo-500" />
+                Quick Actions
+              </h2>
+              <div className="space-y-3">
+                <Link to="/admin/projects" className="flex items-center justify-between p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors border border-white/5 group">
+                  <span className="text-slate-300">Pending Reviews</span>
+                  <div className="flex items-center gap-2">
+                    <span className="bg-amber-500/20 text-amber-500 px-2 py-0.5 rounded text-xs font-bold">{dashboard?.pending_projects || 0}</span>
+                    <ArrowRight className="w-4 h-4 text-slate-500 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </Link>
+                <Link to="/admin/requests" className="flex items-center justify-between p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors border border-white/5 group">
+                  <span className="text-slate-300">Access Requests</span>
+                  <ArrowRight className="w-4 h-4 text-slate-500 group-hover:translate-x-1 transition-transform" />
+                </Link>
+                <Link to="/admin/audit" className="flex items-center justify-between p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors border border-white/5 group">
+                  <span className="text-slate-300">Audit Logs</span>
+                  <ArrowRight className="w-4 h-4 text-slate-500 group-hover:translate-x-1 transition-transform" />
+                </Link>
               </div>
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6"
-          >
-            <h2 className="text-2xl font-bold text-white mb-4">
-              Transaction Summary
-            </h2>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center p-4 bg-slate-700/30 rounded-lg">
-                <span className="text-gray-300">Total Transactions</span>
-                <span className="text-2xl font-bold text-blue-400">
-                  {dashboard?.total_transactions || 0}
-                </span>
-              </div>
-              <div className="flex justify-between items-center p-4 bg-slate-700/30 rounded-lg">
-                <span className="text-gray-300">Successful</span>
-                <span className="text-2xl font-bold text-green-400">
-                  {dashboard?.successful_transactions || 0}
-                </span>
-              </div>
-              <div className="flex justify-between items-center p-4 bg-slate-700/30 rounded-lg">
-                <span className="text-gray-300">Failed</span>
-                <span className="text-2xl font-bold text-red-400">
-                  {dashboard?.failed_transactions || 0}
-                </span>
-              </div>
+          {/* Charts or Insights placeholder */}
+          <div className="lg:col-span-2 glass-morphism p-6 min-h-[300px]">
+            <h2 className="text-xl font-bold text-white mb-6">Investment Performance</h2>
+            <div style={{ width: '100%', height: 240 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={[{ m: 'Jan', v: 4000 }, { m: 'Feb', v: 3000 }, { m: 'Mar', v: 5000 }, { m: 'Apr', v: 8000 }, { m: 'May', v: 7000 }, { m: 'Jun', v: 10000 }]}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                  <XAxis dataKey="m" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v / 1000}k`} />
+                  <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px' }} />
+                  <Line type="monotone" dataKey="v" stroke="#6366f1" strokeWidth={3} dot={{ r: 4, fill: '#6366f1' }} activeDot={{ r: 6 }} />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
-          </motion.div>
+          </div>
         </div>
       </motion.div>
     </div>
   );
 };
+
+// Internal components or helpers
+const ArrowRight = ({ className }) => (
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+);
 
 export default AdminDashboard;

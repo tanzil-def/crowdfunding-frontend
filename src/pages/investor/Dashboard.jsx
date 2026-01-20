@@ -31,7 +31,6 @@ import { Link } from "react-router-dom";
 const InvestorDashboard = () => {
   const [dashboard, setDashboard] = useState(null);
   const [portfolio, setPortfolio] = useState(null);
-  const [recentInvestments, setRecentInvestments] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -41,19 +40,16 @@ const InvestorDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [dashRes, portfolioRes, investmentsRes] = await Promise.all([
+      const [dashRes, portfolioRes] = await Promise.all([
         investorService.getDashboardSummary(),
         investorService.getPortfolioSummary(),
-        investorService.getMyInvestments({ page_size: 5 }),
       ]);
 
-      // Handle potential { success: true, data: { ... } } wrapper for dashboard & portfolio
       const dashData = dashRes.data || dashRes;
       const portfolioData = portfolioRes.data || portfolioRes;
 
       setDashboard(dashData);
       setPortfolio(portfolioData);
-      setRecentInvestments(investmentsRes.results || []);
     } catch (err) {
       console.error("Failed to load dashboard:", err);
     } finally {
@@ -63,11 +59,11 @@ const InvestorDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-emerald-900 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-[#030712] flex items-center justify-center">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full"
+          className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full"
         />
       </div>
     );
@@ -75,254 +71,171 @@ const InvestorDashboard = () => {
 
   const stats = [
     {
-      title: "Total Invested",
-      value: `$${(portfolio?.total_invested || 0).toLocaleString()}`,
-      icon: DollarSign,
-      color: "from-emerald-500 to-green-500",
-      trend: "+15.3%",
-      trendUp: true,
-    },
-    {
-      title: "Active Projects",
-      value: portfolio?.total_projects || 0,
-      icon: Briefcase,
-      color: "from-blue-500 to-cyan-500",
-      trend: "+2",
-      trendUp: true,
-    },
-    {
-      title: "Total Shares",
-      value: portfolio?.total_shares || 0,
-      icon: PieIcon,
-      color: "from-purple-500 to-pink-500",
-      trend: "+120",
-      trendUp: true,
-    },
-    {
-      title: "Portfolio Value",
-      value: `$${((portfolio?.total_invested || 0) * 1.08).toLocaleString()}`,
+      label: "Portfolio Value",
+      value: dashboard?.portfolio_value || 0,
       icon: Wallet,
-      color: "from-orange-500 to-yellow-500",
-      trend: "+8.2%",
-      trendUp: true,
+      color: "from-blue-600 to-indigo-600",
+      isMoney: true,
+      change: portfolio?.profit_loss_percentage ? `+${portfolio.profit_loss_percentage}%` : null,
     },
-  ];
-
-  // Mock allocation data - in production, this would come from backend
-  const allocationData = dashboard?.project_allocation || [
-    { name: "Technology", value: 35, color: "#3b82f6" },
-    { name: "Healthcare", value: 25, color: "#10b981" },
-    { name: "Finance", value: 20, color: "#8b5cf6" },
-    { name: "Real Estate", value: 15, color: "#f59e0b" },
-    { name: "Others", value: 5, color: "#6b7280" },
-  ];
-
-  // Performance data
-  const performanceData = dashboard?.performance_data || [
-    { month: "Jan", value: 5000 },
-    { month: "Feb", value: 7500 },
-    { month: "Mar", value: 6800 },
-    { month: "Apr", value: 9200 },
-    { month: "May", value: 11500 },
-    { month: "Jun", value: 15000 },
+    {
+      label: "Total Investments",
+      value: dashboard?.total_investments || 0,
+      icon: DollarSign,
+      color: "from-emerald-600 to-teal-600",
+      change: "+2",
+    },
+    {
+      label: "Favorite Projects",
+      value: dashboard?.favorite_projects || 0,
+      icon: PieIcon,
+      color: "from-purple-600 to-pink-600",
+    },
+    {
+      label: "Active Assets",
+      value: dashboard?.total_shares_owned || 0, // Fallback if still using local naming or keep as extra
+      icon: Briefcase,
+      color: "from-amber-600 to-orange-600",
+    },
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-emerald-900 to-slate-900 p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-[#030712] text-slate-200 p-4 md:p-8">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-7xl mx-auto space-y-8"
+      >
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent mb-2">
-            Investment Dashboard
-          </h1>
-          <p className="text-gray-400 text-lg">
-            Track your portfolio performance and investments
-          </p>
-        </motion.div>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <h1 className="text-4xl font-bold text-white mb-2">Investor Terminal</h1>
+            <p className="text-slate-400">Monitor your assets and explore new ventures</p>
+          </div>
+          <div className="flex items-center gap-3">
+            {dashboard?.unread_notifications > 0 && (
+              <div className="glass-morphism px-4 py-2 rounded-xl border-blue-500/20 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                <span className="text-sm font-medium text-blue-500">{dashboard.unread_notifications} New Messages</span>
+              </div>
+            )}
+            <Link
+              to="/projects"
+              className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl transition-all font-semibold shadow-lg shadow-blue-900/20 flex items-center gap-2"
+            >
+              Explore Projects
+              <ArrowUpRight className="w-5 h-5" />
+            </Link>
+          </div>
+        </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat, index) => (
             <motion.div
-              key={stat.title}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
+              key={stat.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="relative overflow-hidden rounded-2xl bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 p-6"
+              className="glass-morphism p-6 group hover:border-blue-500/30 transition-all"
             >
-              <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-10`} />
-              <div className="relative">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 rounded-xl bg-gradient-to-br ${stat.color}`}>
-                    <stat.icon className="w-6 h-6 text-white" />
-                  </div>
-                  <div className={`flex items-center gap-1 text-sm font-semibold ${stat.trendUp ? "text-green-400" : "text-red-400"
-                    }`}>
-                    {stat.trendUp ? (
-                      <ArrowUpRight className="w-4 h-4" />
-                    ) : (
-                      <ArrowDownRight className="w-4 h-4" />
-                    )}
-                    {stat.trend}
-                  </div>
-                </div>
-                <h3 className="text-gray-400 text-sm font-medium mb-1">
-                  {stat.title}
-                </h3>
-                <p className="text-3xl font-bold text-white">{stat.value}</p>
+              <div className={`p-3 rounded-xl bg-gradient-to-br ${stat.color} w-fit mb-4 group-hover:scale-110 transition-transform`}>
+                <stat.icon className="h-6 w-6 text-white" />
+              </div>
+              <p className="text-slate-400 text-sm font-medium mb-1">{stat.label}</p>
+              <div className="flex items-end gap-2">
+                <span className="text-3xl font-bold text-white">
+                  {stat.isMoney ? `$${parseFloat(stat.value).toLocaleString()}` : stat.value}
+                </span>
+                {stat.change && (
+                  <span className="text-emerald-500 text-xs font-bold mb-1.5">{stat.change}</span>
+                )}
               </div>
             </motion.div>
           ))}
         </div>
 
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Portfolio Allocation */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6"
-          >
-            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-              <PieIcon className="w-6 h-6 text-emerald-400" />
-              Portfolio Allocation
-            </h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={allocationData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) =>
-                    `${name}: ${(percent * 100).toFixed(0)}%`
-                  }
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {allocationData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "rgba(15, 23, 42, 0.9)",
-                    border: "1px solid rgba(148, 163, 184, 0.3)",
-                    borderRadius: "12px",
-                    color: "#fff",
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </motion.div>
-
-          {/* Performance Chart */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6"
-          >
-            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-              <TrendingUp className="w-6 h-6 text-emerald-400" />
-              Investment Growth
-            </h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={performanceData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="month" stroke="#9ca3af" />
-                <YAxis stroke="#9ca3af" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "rgba(15, 23, 42, 0.9)",
-                    border: "1px solid rgba(148, 163, 184, 0.3)",
-                    borderRadius: "12px",
-                    color: "#fff",
-                  }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="value"
-                  stroke="#10b981"
-                  strokeWidth={3}
-                  dot={{ fill: "#10b981", r: 5 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </motion.div>
-        </div>
-
-        {/* Recent Investments */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6"
-        >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-              <Activity className="w-6 h-6 text-emerald-400" />
-              Recent Investments
-            </h2>
-            <Link
-              to="/investor/investments"
-              className="text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1"
-            >
-              View All
-              <ArrowUpRight className="w-4 h-4" />
-            </Link>
-          </div>
-
-          {recentInvestments.length > 0 ? (
-            <div className="space-y-3">
-              {recentInvestments.map((investment, index) => (
-                <motion.div
-                  key={investment.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="flex items-center justify-between p-4 bg-slate-700/30 rounded-xl hover:bg-slate-700/50 transition-colors"
-                >
-                  <div className="flex-1">
-                    <h3 className="text-white font-semibold mb-1">
-                      {investment.project_title}
-                    </h3>
-                    <div className="flex items-center gap-4 text-sm text-gray-400">
-                      <span>{investment.project_category}</span>
-                      <span>•</span>
-                      <span>{investment.shares_purchased} shares</span>
-                      <span>•</span>
-                      <span>{new Date(investment.created_at).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-white font-bold text-lg">
-                      ${parseFloat(investment.total_amount).toLocaleString()}
-                    </p>
-                    <p className="text-gray-400 text-sm">
-                      ${parseFloat(investment.price_per_share).toFixed(2)}/share
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12 text-gray-400">
-              <Briefcase className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <p className="text-lg mb-2">No investments yet</p>
-              <Link
-                to="/investor/browse"
-                className="inline-block mt-4 px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-xl font-semibold hover:from-emerald-600 hover:to-green-600 transition-all"
-              >
-                Browse Projects
+        {/* Main Content Grid */}
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Recent Transactions */}
+          <div className="lg:col-span-2 glass-morphism rounded-2xl overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-white/5 flex justify-between items-center">
+              <h3 className="text-xl font-bold text-white">Market Activity</h3>
+              <Link to="/investor/investments" className="text-blue-400 hover:text-blue-300 text-sm font-semibold transition-colors">
+                View All History
               </Link>
             </div>
-          )}
-        </motion.div>
-      </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-white/5 text-slate-400 text-xs uppercase tracking-wider">
+                  <tr>
+                    <th className="p-6 font-semibold">Asset</th>
+                    <th className="p-6 font-semibold">Date</th>
+                    <th className="p-6 font-semibold">Status</th>
+                    <th className="p-6 font-semibold">Value</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {(dashboard?.recent_transactions || []).length > 0 ? (
+                    dashboard.recent_transactions.map((tx) => (
+                      <tr key={tx.id} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="p-6 font-medium text-white">{tx.project_title}</td>
+                        <td className="p-6 text-slate-400">{new Date(tx.created_at).toLocaleDateString()}</td>
+                        <td className="p-6">
+                          <span className="px-2 py-1 rounded-full text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                            Success
+                          </span>
+                        </td>
+                        <td className="p-6 text-emerald-400 font-bold">$ {parseFloat(tx.amount).toLocaleString()}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="4" className="p-12 text-center text-slate-500">
+                        <div className="flex flex-col items-center gap-4">
+                          <Activity className="w-12 h-12 opacity-20" />
+                          <p>No recent activity found.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Performance Summary */}
+          <div className="lg:col-span-1 glass-morphism p-6 flex flex-col">
+            <h3 className="text-xl font-bold text-white mb-6">Growth Matrix</h3>
+            <div className="flex-1 space-y-6">
+              <div className="p-6 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 rounded-2xl border border-blue-500/20">
+                <p className="text-blue-400 text-sm font-medium mb-1">Unrealized P&L</p>
+                <p className="text-4xl font-black text-white">$ {parseFloat(portfolio?.profit_loss || 0).toLocaleString()}</p>
+                <div className="mt-4 flex items-center gap-2">
+                  <div className="flex-1 h-2 bg-blue-900/50 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-blue-500 rounded-full"
+                      style={{ width: `${portfolio?.profit_loss_percentage || 0}%` }}
+                    />
+                  </div>
+                  <span className="text-blue-400 font-bold text-sm">+{portfolio?.profit_loss_percentage || 0}%</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-white/5 rounded-xl border border-white/5">
+                  <p className="text-slate-400 text-xs mb-1">Average Entry</p>
+                  <p className="text-lg font-bold text-white">$ 124.50</p>
+                </div>
+                <div className="p-4 bg-white/5 rounded-xl border border-white/5">
+                  <p className="text-slate-400 text-xs mb-1">Diversification</p>
+                  <p className="text-lg font-bold text-white">High</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 };

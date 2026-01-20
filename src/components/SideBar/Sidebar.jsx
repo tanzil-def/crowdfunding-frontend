@@ -11,7 +11,8 @@ import {
   Home,
   FileText,
   Shield,
-  Users
+  Users,
+  Lock
 } from "lucide-react";
 import { useSelector } from "react-redux";
 
@@ -42,6 +43,7 @@ const Sidebar = ({ role }) => {
       { icon: <DollarSign size={20} />, label: "My Investments", path: "/investor/my-investments" },
       { icon: <Briefcase size={20} />, label: "Compare Projects", path: "/investor/compare" },
       { icon: <Bell size={20} />, label: "Notifications", path: "/notifications" },
+      { icon: <Lock size={20} />, label: "Access Requests", path: "/investor/requests" },
       { icon: <Settings size={20} />, label: "Account", path: "/account" },
     ],
 

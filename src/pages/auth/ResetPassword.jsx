@@ -34,7 +34,7 @@ const ResetPassword = () => {
         return;
       }
 
-      const response = await authService.confirmPasswordReset(token, password);
+      const response = await authService.resetPassword(token, password, confirmPassword);
 
       if (response.success) {
         alert("Password reset successful! Please login.");

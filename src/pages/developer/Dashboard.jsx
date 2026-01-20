@@ -35,7 +35,7 @@ const LocalStatusBadge = ({ status }) => {
   );
 };
 
-export default function DeveloperDashboard() {
+const DeveloperDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [dashboard, setDashboard] = useState(null);
   const [projects, setProjects] = useState([]);
@@ -52,208 +52,170 @@ export default function DeveloperDashboard() {
         developerService.getMyProjects({ page_size: 5 })
       ]);
 
-      // Handle potential { success: true, data: { ... } } wrapper for dashboard
       const dashData = dashRes.data || dashRes;
       setDashboard(dashData);
-
-      // Projects usually are paginated directly
       setProjects(projectsRes.results || []);
     } catch (err) {
       console.error("Failed to load dashboard:", err);
-      // toast.error("Failed to load dashboard data");
     } finally {
       setLoading(false);
     }
   };
 
-  const approvedProjectsCount = dashboard?.total_approved || 0;
-  const pendingProjectsCount = dashboard?.total_pending || 0;
-  const draftProjectsCount = dashboard?.total_drafts || 0;
-
   if (loading) return (
-    <div className="min-h-[80vh] flex items-center justify-center">
-      <div className="w-16 h-16 border-4 border-emerald-500/10 border-t-emerald-500 rounded-full animate-spin"></div>
+    <div className="min-h-screen bg-[#020617] flex items-center justify-center">
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+        className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full"
+      />
     </div>
   );
+
+  const stats = [
+    {
+      label: 'Total Projects',
+      value: dashboard?.total_projects || 0,
+      icon: FolderKanban,
+      color: 'from-blue-500 to-indigo-500',
+      change: projects.length > 0 ? '+1' : '0'
+    },
+    {
+      label: 'Investment Received',
+      value: dashboard?.total_investment_received || 0,
+      icon: DollarSign,
+      color: 'from-emerald-500 to-teal-500',
+      isMoney: true,
+      change: '+15%'
+    },
+    {
+      label: 'Total Shares Sold',
+      value: dashboard?.total_shares_sold || 0,
+      icon: TrendingUp,
+      color: 'from-purple-500 to-pink-500',
+      change: '+22%'
+    },
+    {
+      label: 'Pending Projects',
+      value: dashboard?.pending_projects || 0,
+      icon: Clock,
+      color: 'from-amber-500 to-orange-500'
+    },
+  ];
 
   return (
-    <div className="space-y-6 p-4 md:p-8 bg-slate-950 min-h-screen text-slate-200">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-            Developer Dashboard
-          </h1>
-          <p className="text-slate-400 mt-1">Manage your projects and track performance</p>
-        </div>
-        <Link
-          to="/developer/projects/create"
-          className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg transition-all font-medium"
-        >
-          <Plus className="h-4 w-4" />
-          Create Project
-        </Link>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          {
-            label: 'Total Projects',
-            value: dashboard?.total_projects || 0,
-            icon: FolderKanban,
-            color: 'text-blue-400'
-          },
-          {
-            label: 'Funds Secured',
-            value: dashboard?.total_funds_raised || 0,
-            icon: DollarSign,
-            color: 'text-emerald-400',
-            isMoney: true
-          },
-          {
-            label: 'Total Investors',
-            value: dashboard?.total_investors || 0,
-            icon: Users,
-            color: 'text-purple-400'
-          },
-          {
-            label: 'Growth',
-            value: '+12%', // Mock growth for now if not in API
-            icon: TrendingUp,
-            color: 'text-amber-400'
-          },
-        ].map((stat, index) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="bg-slate-900 border border-slate-800 p-6 rounded-2xl"
-          >
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm text-slate-400">{stat.label}</p>
-                <div className="text-2xl font-bold mt-1 text-white">
-                  {stat.isMoney ? <LocalMoney amount={stat.value} /> : stat.value}
-                </div>
+    <div className="min-h-screen bg-[#020617] text-slate-200 p-4 md:p-8">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-7xl mx-auto space-y-8"
+      >
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <h1 className="text-4xl font-bold text-white mb-2">Developer Studio</h1>
+            <p className="text-slate-400">Track project fundraising and manage equity</p>
+          </div>
+          <div className="flex items-center gap-3">
+            {dashboard?.unread_notifications > 0 && (
+              <div className="glass-morphism px-4 py-2 rounded-xl border-amber-500/20 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                <span className="text-sm font-medium text-amber-500">{dashboard.unread_notifications} New Alerts</span>
               </div>
-              <div className={`p-3 bg-slate-800 rounded-xl ${stat.color}`}>
-                <stat.icon className="h-6 w-6" />
+            )}
+            <Link
+              to="/developer/projects/create"
+              className="group flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-xl transition-all font-semibold shadow-lg shadow-emerald-900/20"
+            >
+              <Plus className="h-5 w-5 group-hover:rotate-90 transition-transform" />
+              Launch New Project
+            </Link>
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {stats.map((stat, index) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: index * 0.1 }}
+              className="glass-morphism p-6 group hover:border-emerald-500/30 transition-all"
+            >
+              <div className={`p-3 rounded-xl bg-gradient-to-br ${stat.color} w-fit mb-4`}>
+                <stat.icon className="h-6 w-6 text-white" />
               </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Quick Status Info */}
-      <div className="grid md:grid-cols-3 gap-4">
-        <div className="bg-slate-900 border-l-4 border-amber-500 p-4 rounded-xl flex items-center gap-4">
-          <Clock className="text-amber-500 h-6 w-6" />
-          <div>
-            <p className="text-xl font-bold text-white">{pendingProjectsCount}</p>
-            <p className="text-xs text-slate-400 uppercase tracking-wider">Pending Review</p>
-          </div>
-        </div>
-        <div className="bg-slate-900 border-l-4 border-emerald-500 p-4 rounded-xl flex items-center gap-4">
-          <CheckCircle className="text-emerald-500 h-6 w-6" />
-          <div>
-            <p className="text-xl font-bold text-white">{approvedProjectsCount}</p>
-            <p className="text-xs text-slate-400 uppercase tracking-wider">Live Projects</p>
-          </div>
-        </div>
-        <div className="bg-slate-900 border-l-4 border-slate-500 p-4 rounded-xl flex items-center gap-4">
-          <FileEdit className="text-slate-500 h-6 w-6" />
-          <div>
-            <p className="text-xl font-bold text-white">{draftProjectsCount}</p>
-            <p className="text-xs text-slate-400 uppercase tracking-wider">Drafts</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Charts Section - Using Mock data for charts as transient history might not be in basic dashboard API yet */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
-          <h3 className="text-lg font-bold mb-6 text-white">Funds Secured Over Time</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={dashboard?.funding_history || []}>
-                <defs>
-                  <linearGradient id="colorFunds" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                <XAxis dataKey="month" stroke="#64748b" fontSize={12} />
-                <YAxis stroke="#64748b" fontSize={12} tickFormatter={(v) => `$${v / 1000}k`} />
-                <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b' }} />
-                <Area type="monotone" dataKey="funds" stroke="#10b981" fill="url(#colorFunds)" strokeWidth={2} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+              <p className="text-slate-400 text-sm font-medium mb-1">{stat.label}</p>
+              <div className="flex items-end gap-2">
+                <span className="text-3xl font-bold text-white">
+                  {stat.isMoney ? `$${parseFloat(stat.value).toLocaleString()}` : stat.value}
+                </span>
+                {stat.change && (
+                  <span className="text-emerald-500 text-xs font-bold mb-1.5">{stat.change}</span>
+                )}
+              </div>
+            </motion.div>
+          ))}
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
-          <h3 className="text-lg font-bold mb-6 text-white">Shares Distribution</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={projects.slice(0, 5)} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
-                <XAxis type="number" stroke="#64748b" fontSize={12} />
-                <YAxis dataKey="title" type="category" stroke="#64748b" fontSize={10} width={80} />
-                <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b' }} />
-                <Bar dataKey="shares_sold" fill="#10b981" radius={[0, 4, 4, 0]} name="Sold" />
-                <Bar dataKey="remaining_shares" fill="#334155" radius={[0, 4, 4, 0]} name="Remaining" />
-              </BarChart>
-            </ResponsiveContainer>
+        {/* Projects Preview */}
+        <div className="glass-morphism rounded-2xl overflow-hidden">
+          <div className="p-6 border-b border-white/5 flex justify-between items-center">
+            <h3 className="text-xl font-bold text-white">Strategic Overview</h3>
+            <Link to="/developer/projects" className="text-emerald-400 hover:text-emerald-300 text-sm font-semibold flex items-center gap-1 transition-colors">
+              View All Projects <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
-        </div>
-      </div>
-
-      {/* Projects Table */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
-        <div className="p-6 border-b border-slate-800 flex justify-between items-center">
-          <h3 className="font-bold text-white">Recent Project Activities</h3>
-          <Link to="/developer/projects" className="text-emerald-400 text-sm hover:underline flex items-center gap-1">
-            View All Projects <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-slate-800/50 text-slate-400 text-xs uppercase">
-              <tr>
-                <th className="p-4 font-semibold">Project Title</th>
-                <th className="p-4 font-semibold">Status</th>
-                <th className="p-4 font-semibold">Shares Sold</th>
-                <th className="p-4 font-semibold">Funds</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800">
-              {projects.length > 0 ? projects.map((project) => (
-                <tr key={project.id} className="hover:bg-slate-800/30 transition-colors">
-                  <td className="p-4 font-medium text-white">{project.title}</td>
-                  <td className="p-4">
-                    <LocalStatusBadge status={project.status} />
-                  </td>
-                  <td className="p-4 text-slate-300">
-                    {project.shares_sold?.toLocaleString()} / {project.total_shares?.toLocaleString()}
-                  </td>
-                  <td className="p-4 text-emerald-400">
-                    <LocalMoney amount={(project.shares_sold || 0) * (project.share_price || 0)} />
-                  </td>
-                </tr>
-              )) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-white/5 text-slate-400 text-xs uppercase tracking-wider">
                 <tr>
-                  <td colSpan="4" className="p-8 text-center text-slate-500">
-                    No projects found. Create your first project!
-                  </td>
+                  <th className="p-6 font-semibold">Project</th>
+                  <th className="p-6 font-semibold">Status</th>
+                  <th className="p-6 font-semibold">Equity Progress</th>
+                  <th className="p-6 font-semibold">Capital Raised</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {projects.length > 0 ? projects.map((project) => (
+                  <tr key={project.id} className="hover:bg-white/[0.02] transition-colors group">
+                    <td className="p-6 font-medium text-white group-hover:text-emerald-400 transition-colors uppercase tracking-tight">{project.title}</td>
+                    <td className="p-6">
+                      <LocalStatusBadge status={project.status} />
+                    </td>
+                    <td className="p-6">
+                      <div className="flex items-center gap-3 max-w-[200px]">
+                        <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-emerald-500 rounded-full"
+                            style={{ width: `${(project.shares_sold / project.total_shares) * 100}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-slate-400 min-w-[40px] font-medium">
+                          {Math.round((project.shares_sold / project.total_shares) * 100)}%
+                        </span>
+                      </div>
+                    </td>
+                    <td className="p-6 text-emerald-400 font-bold bg-emerald-400/5">$ {((project.shares_sold || 0) * (project.share_price || 0)).toLocaleString()}</td>
+                  </tr>
+                )) : (
+                  <tr>
+                    <td colSpan="4" className="p-12 text-center text-slate-500">
+                      <div className="flex flex-col items-center gap-4">
+                        <FolderKanban className="w-12 h-12 opacity-20" />
+                        <p className="text-lg">Initiate your first project to start tracking equity.</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
-}
+};
+
+export default DeveloperDashboard;

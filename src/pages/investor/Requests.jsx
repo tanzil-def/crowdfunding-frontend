@@ -30,7 +30,7 @@ const AccessRequests = () => {
       if (filter !== "ALL") {
         params.status = filter;
       }
-      const data = await investorService.getMyAccessRequests(params);
+      const data = await investorService.getRequests(params);
       setRequests(data.results || []);
     } catch (err) {
       toast.error("Failed to load access requests");
