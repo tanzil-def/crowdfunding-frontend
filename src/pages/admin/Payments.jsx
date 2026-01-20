@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getAdminTransactions, getAdminTransactionDetail } from "../../services/api";
+import adminService from "../../api/adminService";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   DollarSign,
@@ -38,7 +38,7 @@ const Payments = () => {
       if (search) params.search = search;
       if (statusFilter !== "ALL") params.status = statusFilter;
 
-      const data = await getAdminTransactions(params);
+      const data = await adminService.getTransactions(params);
       setTransactions(data.results || []);
       setTotalPages(Math.ceil(data.count / 15));
     } catch (err) {
@@ -50,7 +50,7 @@ const Payments = () => {
 
   const viewTransactionDetail = async (transaction) => {
     try {
-      const detail = await getAdminTransactionDetail(transaction.id);
+      const detail = await adminService.getTransactionDetail(transaction.id);
       setSelectedTransaction(detail);
       setShowDetailModal(true);
     } catch (err) {
@@ -215,11 +215,10 @@ const Payments = () => {
                   setStatusFilter(status);
                   setPage(1);
                 }}
-                className={`px-6 py-3 rounded-xl font-semibold whitespace-nowrap transition-all ${
-                  statusFilter === status
-                    ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/50"
-                    : "bg-slate-700/50 text-gray-300 hover:bg-slate-700"
-                }`}
+                className={`px-6 py-3 rounded-xl font-semibold whitespace-nowrap transition-all ${statusFilter === status
+                  ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/50"
+                  : "bg-slate-700/50 text-gray-300 hover:bg-slate-700"
+                  }`}
               >
                 {status}
               </button>

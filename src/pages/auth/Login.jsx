@@ -1,14 +1,16 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { loginUser, getMyProfile } from "../../services/api";
+import authService from "../../api/authService";
 import { login as reduxLogin } from "../../store/slices/userSlice";
+import { Eye, EyeOff } from "lucide-react";
 
 
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -21,19 +23,25 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // 1. Login to get tokens
-      const response = await loginUser({ email, password });
-      const { access, refresh } = response.data;
+      const response = await authService.login(email, password);
+      // Backend might return { access, refresh } or { data: { access, refresh } }
+      const data = response.data || response;
+      const { access, refresh } = data;
+
+      if (!access) {
+        throw new Error("No access token received");
+      }
 
       // 2. Store tokens
       localStorage.setItem("accessToken", access);
       localStorage.setItem("refreshToken", refresh);
 
       // 3. Fetch user profile to get role
-      const userProfile = await getMyProfile();
+      const userProfile = await authService.getProfile();
 
-      // 4. Update Redux State
+      // 4. Update Redux State & LocalStorage
       dispatch(reduxLogin(userProfile));
+      localStorage.setItem("user", JSON.stringify(userProfile));
 
       // 5. Redirect based on role
       const role = userProfile.role;
@@ -69,7 +77,7 @@ const Login = () => {
       <div className="relative w-full max-w-md bg-slate-900/85 backdrop-blur-2xl p-8 md:p-10 rounded-[2.5rem] border border-slate-700/50 shadow-2xl z-10">
         <div className="text-center mb-10">
           <h2 className="text-4xl font-black text-white mb-2 tracking-tight uppercase">
-            Crowdfunding Trading
+            Crowdfunding Trading Platform
           </h2>
           <p className="text-slate-400 text-sm">Sign in to your account</p>
         </div>
@@ -96,12 +104,12 @@ const Login = () => {
             />
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
-              Password
-            </label>
+          <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
+            Password
+          </label>
+          <div className="relative">
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
@@ -109,6 +117,13 @@ const Login = () => {
               required
               autoComplete="current-password"
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
           </div>
 
           <div className="flex items-center justify-end">

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
-import { verifyEmail } from "../../services/api";
+import authService from "../../api/authService";
 
 const VerifyEmail = () => {
   const [searchParams] = useSearchParams();
@@ -10,7 +10,7 @@ const VerifyEmail = () => {
 
   useEffect(() => {
     const token = searchParams.get("token");
-    
+
     if (!token) {
       setStatus("error");
       setMessage("Verification token is missing");
@@ -19,8 +19,8 @@ const VerifyEmail = () => {
 
     const verify = async () => {
       try {
-        const response = await verifyEmail(token);
-        
+        const response = await authService.verifyEmail(token);
+
         if (response.success) {
           setStatus("success");
           setMessage("Email verified successfully! Redirecting to login...");

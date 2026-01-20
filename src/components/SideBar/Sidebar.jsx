@@ -21,6 +21,7 @@ const Sidebar = ({ role }) => {
 
   // Safe access to Redux state
   const { user } = useSelector((state) => state.user || {});
+  const { pendingProjectsCount } = useSelector((state) => state.admin || { pendingProjectsCount: 0 });
 
   const isActive = (path) => location.pathname === path;
 
@@ -97,7 +98,12 @@ const Sidebar = ({ role }) => {
               >
                 <span className="mr-3">{item.icon}</span>
                 {item.label}
-                {isActive(item.path) && (
+                {item.label === "Pending Projects" && pendingProjectsCount > 0 && (
+                  <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                    {pendingProjectsCount}
+                  </span>
+                )}
+                {isActive(item.path) && !(item.label === "Pending Projects" && pendingProjectsCount > 0) && (
                   <div className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
                 )}
               </Link>

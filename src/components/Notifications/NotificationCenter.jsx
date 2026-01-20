@@ -1,38 +1,29 @@
-import React, { useState, useEffect } from "react";
-import { getNotifications, markNotificationRead } from "../../services/api";
+import React from "react";
+import { useSelector, useDispatch } from "react-redux";
+import developerService from "../../api/developerService";
+import { markRead, setNotifications } from "../../store/slices/notificationSlice";
 import { Bell, Check, Clock, X, AlertCircle, CheckCircle, Info } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-hot-toast";
 
 const NotificationCenter = ({ isOpen, onClose }) => {
-    const [notifications, setNotifications] = useState([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        if (isOpen) {
-            fetchNotifications();
-        }
-    }, [isOpen]);
+    const { notifications, loading } = useSelector((state) => state.notifications);
+    const dispatch = useDispatch();
 
     const fetchNotifications = async () => {
         try {
-            setLoading(true);
-            const res = await getNotifications();
+            const res = await developerService.getNotifications();
             const data = res.data || res;
-            setNotifications(data.results || []);
+            dispatch(setNotifications(data.results || []));
         } catch (err) {
             console.error("Failed to fetch notifications:", err);
-        } finally {
-            setLoading(false);
         }
     };
 
     const handleMarkAsRead = async (id) => {
         try {
-            await markNotificationRead(id);
-            setNotifications(prev =>
-                prev.map(n => n.id === id ? { ...n, is_read: true } : n)
-            );
+            await developerService.markNotificationRead(id);
+            dispatch(markRead(id));
         } catch (err) {
             toast.error("Failed to mark notification as read");
         }

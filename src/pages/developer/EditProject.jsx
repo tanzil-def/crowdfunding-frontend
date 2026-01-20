@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { updateProject, submitProjectForReview } from "../../services/api";
-import api from "../../services/api";
+import developerService from "../../api/developerService";
+import axiosInstance from "../../api/axiosInstance";
 import { motion } from "framer-motion";
 import { Save, Send, X, AlertCircle, CheckCircle } from "lucide-react";
 import { toast } from "react-hot-toast";
@@ -11,7 +11,7 @@ const EditProject = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -42,9 +42,8 @@ const EditProject = () => {
   const fetchProject = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`/api/v1/projects/${id}/detail/`);
-      const data = response.data;
-      
+      const data = await developerService.getProjectDetail(id);
+
       // Set form data with correct field names
       setFormData({
         title: data.title || "",
@@ -67,9 +66,9 @@ const EditProject = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({ 
-      ...formData, 
-      [name]: type === "checkbox" ? checked : value 
+    setFormData({
+      ...formData,
+      [name]: type === "checkbox" ? checked : value
     });
   };
 
@@ -88,7 +87,7 @@ const EditProject = () => {
         is_3d_restricted: formData.is_3d_restricted,
       };
 
-      await updateProject(id, updateData);
+      await developerService.updateProject(id, updateData);
       toast.success("Project updated successfully!");
       navigate("/developer/projects");
     } catch (err) {
@@ -100,7 +99,7 @@ const EditProject = () => {
 
   const handleSubmitForReview = async () => {
     try {
-      await submitProjectForReview(id);
+      await developerService.submitProjectForReview(id);
       toast.success("Project submitted for review!");
       navigate("/developer/projects");
     } catch (err) {
@@ -149,13 +148,12 @@ const EditProject = () => {
           </h1>
           <p className="text-gray-400 text-lg">Update your project details</p>
           <div className="flex items-center gap-3 mt-4">
-            <span className={`px-4 py-2 rounded-full text-sm font-bold border ${
-              formData.status === "APPROVED" ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" :
+            <span className={`px-4 py-2 rounded-full text-sm font-bold border ${formData.status === "APPROVED" ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" :
               formData.status === "PENDING_REVIEW" ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" :
-              formData.status === "REJECTED" ? "bg-red-500/20 text-red-400 border-red-500/30" :
-              formData.status === "NEEDS_CHANGES" ? "bg-orange-500/20 text-orange-400 border-orange-500/30" :
-              "bg-slate-500/20 text-slate-400 border-slate-500/30"
-            }`}>
+                formData.status === "REJECTED" ? "bg-red-500/20 text-red-400 border-red-500/30" :
+                  formData.status === "NEEDS_CHANGES" ? "bg-orange-500/20 text-orange-400 border-orange-500/30" :
+                    "bg-slate-500/20 text-slate-400 border-slate-500/30"
+              }`}>
               {formData.status}
             </span>
             {canEdit && (
@@ -179,7 +177,7 @@ const EditProject = () => {
               <div>
                 <h3 className="text-yellow-400 font-bold mb-1">Cannot Edit</h3>
                 <p className="text-yellow-300 text-sm">
-                  This project cannot be edited in its current status ({formData.status}). 
+                  This project cannot be edited in its current status ({formData.status}).
                   Only DRAFT and NEEDS_CHANGES projects can be modified.
                 </p>
               </div>
@@ -195,7 +193,7 @@ const EditProject = () => {
             className="bg-slate-800/50 backdrop-blur-xl rounded-2xl p-8 border border-slate-700/50 space-y-6"
           >
             <h2 className="text-2xl font-bold text-white mb-4">Basic Information</h2>
-            
+
             <div>
               <label className="block text-sm font-bold text-slate-300 mb-2">Project Title *</label>
               <input
@@ -306,7 +304,7 @@ const EditProject = () => {
             className="bg-slate-800/50 backdrop-blur-xl rounded-2xl p-8 border border-slate-700/50 space-y-6"
           >
             <h2 className="text-2xl font-bold text-white mb-4">Restricted Information</h2>
-            
+
             <div>
               <label className="block text-sm font-bold text-slate-300 mb-2">
                 Restricted Content (Optional)
@@ -361,7 +359,7 @@ const EditProject = () => {
             >
               Manage Media
             </button>
-            
+
             {canEdit && (
               <>
                 <button
@@ -385,7 +383,7 @@ const EditProject = () => {
                     </>
                   )}
                 </button>
-                
+
                 {formData.status === "DRAFT" && (
                   <button
                     type="button"

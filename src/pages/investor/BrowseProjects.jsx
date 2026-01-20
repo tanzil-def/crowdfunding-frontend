@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { browseProjects, addToFavorites, removeFromFavorites, getProjectMedia } from "../../services/api";
+import investorService from "../../api/investorService";
+import developerService from "../../api/developerService";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -61,7 +62,7 @@ const BrowseProjects = () => {
       if (search) params.search = search;
       if (category && category !== "All") params.category = category;
 
-      const res = await browseProjects(params);
+      const res = await investorService.browseProjects(params);
       // Handle potential { success: true, data: { ... } } wrapper
       const data = res.data || res;
       setProjects(data.results || []);
@@ -77,7 +78,7 @@ const BrowseProjects = () => {
   const handleToggleFavorite = async (project) => {
     try {
       if (favorites.has(project.id)) {
-        await removeFromFavorites(project.favorite_id);
+        await investorService.removeFromFavorites(project.favorite_id);
         setFavorites((prev) => {
           const newSet = new Set(prev);
           newSet.delete(project.id);
@@ -85,7 +86,7 @@ const BrowseProjects = () => {
         });
         toast.success("Removed from favorites");
       } else {
-        await addToFavorites(project.id);
+        await investorService.addToFavorites(project.id);
         setFavorites((prev) => new Set(prev).add(project.id));
         toast.success("Added to favorites");
       }
@@ -238,7 +239,7 @@ const ProjectCard = ({ project, index, favorites, onToggleFavorite }) => {
   useEffect(() => {
     const fetchMedia = async () => {
       try {
-        const mediaData = await getProjectMedia(project.id);
+        const mediaData = await developerService.getProjectMedia(project.id);
         if (mediaData.results && mediaData.results.length > 0) {
           const imageItem = mediaData.results.find(m => m.type === "IMAGE") || mediaData.results[0];
           setCoverImage(imageItem.file || imageItem.file_url);

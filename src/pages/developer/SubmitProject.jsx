@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { submitProjectForReview } from "../../services/api";
-import api from "../../services/api";
+import developerService from "../../api/developerService";
 import { motion } from "framer-motion";
 import {
   CheckCircle,
@@ -32,10 +31,9 @@ const SubmitProject = () => {
   const fetchProjectDetails = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`/api/v1/projects/${id}/detail/`);
-      const projectData = response.data;
+      const projectData = await developerService.getProjectDetail(id);
       setProject(projectData);
-      
+
       // Validate project
       validateProject(projectData);
     } catch (err) {
@@ -101,7 +99,7 @@ const SubmitProject = () => {
 
     try {
       setSubmitting(true);
-      await submitProjectForReview(id);
+      await developerService.submitProjectForReview(id);
       toast.success("Project submitted for admin review!");
       navigate("/developer/projects");
     } catch (err) {
@@ -126,8 +124,8 @@ const SubmitProject = () => {
   if (!project) return null;
 
   const canSubmit = errors.length === 0;
-  const sharePrice = project.total_shares > 0 
-    ? parseFloat(project.total_project_value) / project.total_shares 
+  const sharePrice = project.total_shares > 0
+    ? parseFloat(project.total_project_value) / project.total_shares
     : 0;
 
   return (
@@ -374,11 +372,10 @@ const SubmitProject = () => {
         >
           <p className="text-gray-400 text-sm">
             Current Status:{" "}
-            <span className={`font-semibold ${
-              project.status === "DRAFT" ? "text-slate-400" :
+            <span className={`font-semibold ${project.status === "DRAFT" ? "text-slate-400" :
               project.status === "NEEDS_CHANGES" ? "text-yellow-400" :
-              "text-white"
-            }`}>
+                "text-white"
+              }`}>
               {project.status}
             </span>
           </p>

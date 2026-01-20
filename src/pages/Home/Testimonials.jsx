@@ -10,21 +10,21 @@ const testimonials = [
     name: "Jane Smith",
     img: avatarOne,
     comment:
-      "I had a great experience with Crowd Fund Castle. They provided excellent support and helped me find the perfect real estate project for investment.",
+      "I had a great experience with Castle. They provided excellent support and helped me find the perfect real estate project for investment.",
   },
   {
     id: 2,
     name: "John Doe",
     img: avatarTwo,
     comment:
-      "Crowd Fund Castle has been a game-changer for me. Their platform is user-friendly, and I love how they provide detailed project information. Highly recommended!",
+      "Castle has been a game-changer for me. Their platform is user-friendly, and I love how they provide detailed project information. Highly recommended!",
   },
   {
     id: 3,
     name: "Michael Johnson",
     img: avatarThree,
     comment:
-      "I've been using Crowd Fund Castle for my real estate investments, and I couldn't be happier. The team is professional, and their projects offer attractive returns. A trustworthy platform.",
+      "I've been using Castle for my real estate investments, and I couldn't be happier. The team is professional, and their projects offer attractive returns. A trustworthy platform.",
   },
 ];
 

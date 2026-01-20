@@ -2,11 +2,11 @@
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
-import { Bell, LogOut, Menu, X, Search } from "lucide-react"; 
+import { Bell, LogOut, Menu, X, Search } from "lucide-react";
 
 const NotificationBell = () => {
   const [isOpen, setIsOpen] = useState(false);
-  
+
   const notifications = [
     { id: 1, title: "Investment Success", message: "You invested in Project X", read: false },
     { id: 2, title: "Project Approved", message: "Your project got approved!", read: true },
@@ -54,10 +54,10 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
         {/* Logo */}
         <div
-          className="text-2xl font-bold cursor-pointer"
+          className="text-xl font-bold cursor-pointer"
           onClick={() => navigate("/")}
         >
-          Crowd Fund Castle
+          Crowdfunding Trading
         </div>
 
         {/* Desktop Nav */}

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
-import { confirmPasswordReset } from "../../services/api";
+import authService from "../../api/authService";
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
@@ -28,14 +28,14 @@ const ResetPassword = () => {
 
     try {
       const token = searchParams.get("token");
-      
+
       if (!token) {
         setError("Invalid reset link");
         return;
       }
 
-      const response = await confirmPasswordReset(token, password);
-      
+      const response = await authService.confirmPasswordReset(token, password);
+
       if (response.success) {
         alert("Password reset successful! Please login.");
         navigate("/login");

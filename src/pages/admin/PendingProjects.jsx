@@ -1,11 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  getAdminPendingProjects,
-  approveProject,
-  rejectProject,
-  requestProjectChanges,
-  getProjectDetail,
-} from "../../services/api";
+import adminService from "../../api/adminService";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   CheckCircle,
@@ -39,7 +33,7 @@ const PendingProjects = () => {
   const fetchPendingProjects = async () => {
     try {
       setLoading(true);
-      const res = await getAdminPendingProjects({ page, page_size: 10 });
+      const res = await adminService.getPendingProjects({ page, page_size: 10 });
       // Handle potential { success: true, data: { ... } } wrapper
       const data = res.data || res;
       setProjects(data.results || []);
@@ -54,7 +48,7 @@ const PendingProjects = () => {
 
   const handleApprove = async (id) => {
     try {
-      await approveProject(id);
+      await adminService.approveProject(id);
       toast.success("Project approved successfully!");
       fetchPendingProjects();
       setShowModal(false);
@@ -69,7 +63,7 @@ const PendingProjects = () => {
       return;
     }
     try {
-      await rejectProject(selectedProject.id, reason);
+      await adminService.rejectProject(selectedProject.id, reason);
       toast.success("Project rejected");
       fetchPendingProjects();
       setShowModal(false);
@@ -85,7 +79,7 @@ const PendingProjects = () => {
       return;
     }
     try {
-      await requestProjectChanges(selectedProject.id, note);
+      await adminService.requestProjectChanges(selectedProject.id, note);
       toast.success("Change request sent to developer");
       fetchPendingProjects();
       setShowModal(false);

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getInvestorDashboard, getPortfolioSummary, getMyInvestments } from "../../services/api";
+import investorService from "../../api/investorService";
 import { motion } from "framer-motion";
 import {
   PieChart,
@@ -42,9 +42,9 @@ const InvestorDashboard = () => {
     try {
       setLoading(true);
       const [dashRes, portfolioRes, investmentsRes] = await Promise.all([
-        getInvestorDashboard(),
-        getPortfolioSummary(),
-        getMyInvestments({ page_size: 5 }),
+        investorService.getDashboardSummary(),
+        investorService.getPortfolioSummary(),
+        investorService.getMyInvestments({ page_size: 5 }),
       ]);
 
       // Handle potential { success: true, data: { ... } } wrapper for dashboard & portfolio

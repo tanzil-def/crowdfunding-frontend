@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getAdminAuditLogs } from "../../services/api";
+import adminService from "../../api/adminService";
 import { motion } from "framer-motion";
 import {
   FileText,
@@ -32,7 +32,7 @@ const AuditLogs = () => {
       if (search) params.search = search;
       if (actionFilter !== "ALL") params.action = actionFilter;
 
-      const res = await getAdminAuditLogs(params);
+      const res = await adminService.getAuditLogs(params);
       // Handle potential { success: true, data: { ... } } wrapper
       const data = res.data || res;
       setLogs(data.results || []);
@@ -121,8 +121,8 @@ const AuditLogs = () => {
                   setPage(1);
                 }}
                 className={`px-6 py-3 rounded-xl font-semibold whitespace-nowrap transition-all ${actionFilter === action
-                    ? "bg-gradient-to-r from-gray-500 to-slate-500 text-white shadow-lg shadow-gray-500/50"
-                    : "bg-slate-700/50 text-gray-300 hover:bg-slate-700"
+                  ? "bg-gradient-to-r from-gray-500 to-slate-500 text-white shadow-lg shadow-gray-500/50"
+                  : "bg-slate-700/50 text-gray-300 hover:bg-slate-700"
                   }`}
               >
                 {action}

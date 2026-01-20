@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createProject, uploadProjectMedia } from "../../services/api";
+import developerService from "../../api/developerService";
 import { motion } from "framer-motion";
 import { CheckCircle, AlertCircle } from "lucide-react";
 import { toast } from "react-hot-toast";
@@ -60,7 +60,7 @@ const CreateProject = () => {
     setLoading(true);
 
     try {
-      const response = await createProject(formData);
+      const response = await developerService.createProject(formData);
       // Access id from nested data field
       const projectId = response.data.id;
 
@@ -75,7 +75,7 @@ const CreateProject = () => {
           mediaFormData.append("type", "IMAGE");
           mediaFormData.append("file", image);
           mediaFormData.append("is_restricted", false);
-          await uploadProjectMedia(projectId, mediaFormData);
+          await developerService.uploadProjectMedia(projectId, mediaFormData);
         }
       }
 
@@ -84,7 +84,7 @@ const CreateProject = () => {
         mediaFormData.append("type", "MODEL_3D");
         mediaFormData.append("file", files.model_3d);
         mediaFormData.append("is_restricted", formData.is_3d_restricted);
-        await uploadProjectMedia(projectId, mediaFormData);
+        await developerService.uploadProjectMedia(projectId, mediaFormData);
       }
 
       toast.success("Project created as draft!");
@@ -105,7 +105,7 @@ const CreateProject = () => {
     setLoading(true);
 
     try {
-      const response = await createProject(formData);
+      const response = await developerService.createProject(formData);
       // Access id from nested data field
       const projectId = response.data.id;
 
@@ -120,7 +120,7 @@ const CreateProject = () => {
           mediaFormData.append("type", "IMAGE");
           mediaFormData.append("file", image);
           mediaFormData.append("is_restricted", false);
-          await uploadProjectMedia(projectId, mediaFormData);
+          await developerService.uploadProjectMedia(projectId, mediaFormData);
         }
       }
 
@@ -129,7 +129,7 @@ const CreateProject = () => {
         mediaFormData.append("type", "MODEL_3D");
         mediaFormData.append("file", files.model_3d);
         mediaFormData.append("is_restricted", formData.is_3d_restricted);
-        await uploadProjectMedia(projectId, mediaFormData);
+        await developerService.uploadProjectMedia(projectId, mediaFormData);
       }
 
       // Redirect to submit page
@@ -431,10 +431,10 @@ const CreateProject = () => {
 const StepIndicator = ({ active, completed, number, label }) => (
   <div className="flex items-center gap-2 flex-1">
     <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold border-2 transition-all ${completed
-        ? "bg-emerald-500 border-emerald-500 text-white"
-        : active
-          ? "bg-emerald-600 border-emerald-600 text-white"
-          : "bg-slate-800 border-slate-600 text-slate-400"
+      ? "bg-emerald-500 border-emerald-500 text-white"
+      : active
+        ? "bg-emerald-600 border-emerald-600 text-white"
+        : "bg-slate-800 border-slate-600 text-slate-400"
       }`}>
       {completed ? "✓" : number}
     </div>

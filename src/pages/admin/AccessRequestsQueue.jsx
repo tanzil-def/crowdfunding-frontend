@@ -1,10 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  getAdminAccessRequests,
-  approveAccessRequest,
-  rejectAccessRequest,
-  revokeAccessRequest,
-} from "../../services/api";
+import adminService from "../../api/adminService";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   CheckCircle,
@@ -41,7 +36,7 @@ const AccessRequestsQueue = () => {
       if (filter !== "ALL") {
         params.status = filter;
       }
-      const res = await getAdminAccessRequests(params);
+      const res = await adminService.getAccessRequests(params);
       // Handle potential { success: true, data: { ... } } wrapper
       const data = res.data || res;
       setRequests(data.results || []);
@@ -56,7 +51,7 @@ const AccessRequestsQueue = () => {
 
   const handleApprove = async (id) => {
     try {
-      await approveAccessRequest(id);
+      await adminService.approveAccessRequest(id);
       toast.success("Access request approved!");
       fetchAccessRequests();
     } catch (err) {
@@ -70,7 +65,7 @@ const AccessRequestsQueue = () => {
       return;
     }
     try {
-      await rejectAccessRequest(selectedRequest.id, reason);
+      await adminService.rejectAccessRequest(selectedRequest.id, reason);
       toast.success("Access request rejected");
       fetchAccessRequests();
       closeModal();
@@ -85,7 +80,7 @@ const AccessRequestsQueue = () => {
       return;
     }
     try {
-      await revokeAccessRequest(selectedRequest.id, reason);
+      await adminService.revokeAccessRequest(selectedRequest.id, reason);
       toast.success("Access revoked");
       fetchAccessRequests();
       closeModal();
@@ -180,8 +175,8 @@ const AccessRequestsQueue = () => {
                 setPage(1);
               }}
               className={`px-6 py-3 rounded-xl font-semibold transition-all whitespace-nowrap ${filter === status
-                  ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/50"
-                  : "bg-slate-700/50 text-gray-300 hover:bg-slate-700"
+                ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/50"
+                : "bg-slate-700/50 text-gray-300 hover:bg-slate-700"
                 }`}
             >
               {status}
@@ -369,8 +364,8 @@ const AccessRequestsQueue = () => {
                 <button
                   onClick={modalType === "reject" ? handleReject : handleRevoke}
                   className={`flex-1 px-4 py-3 bg-gradient-to-r ${modalType === "reject"
-                      ? "from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600"
-                      : "from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                    ? "from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600"
+                    : "from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
                     } text-white rounded-xl font-semibold transition-all`}
                 >
                   Confirm {modalType === "reject" ? "Rejection" : "Revocation"}

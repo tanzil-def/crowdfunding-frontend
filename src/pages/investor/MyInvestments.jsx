@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getMyInvestments, getInvestmentDetail } from "../../services/api";
+import investorService from "../../api/investorService";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   TrendingUp,
@@ -30,7 +30,7 @@ const MyInvestments = () => {
   const fetchInvestments = async () => {
     try {
       setLoading(true);
-      const data = await getMyInvestments({ page, page_size: 10 });
+      const data = await investorService.getMyInvestments({ page, page_size: 10 });
       setInvestments(data.results || []);
       setTotalPages(Math.ceil(data.count / 10));
     } catch (err) {
@@ -42,7 +42,7 @@ const MyInvestments = () => {
 
   const viewReceipt = async (investment) => {
     try {
-      const detail = await getInvestmentDetail(investment.id);
+      const detail = await investorService.getInvestmentDetail(investment.id);
       setSelectedInvestment(detail);
       setShowReceiptModal(true);
     } catch (err) {

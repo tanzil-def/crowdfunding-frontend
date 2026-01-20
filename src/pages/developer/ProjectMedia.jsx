@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { uploadProjectMedia } from "../../services/api";
+import developerService from "../../api/developerService";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Upload,
@@ -35,7 +35,7 @@ const ProjectMedia = () => {
   const fetchMedia = async () => {
     try {
       setLoading(true);
-      const data = await getProjectMedia(id);
+      const data = await developerService.getProjectMedia(id);
       setMedia(data.results || []);
     } catch (err) {
       toast.error("Failed to load media");
@@ -55,7 +55,7 @@ const ProjectMedia = () => {
 
   const handleUpload = async (e) => {
     e.preventDefault();
-    
+
     if (!uploadForm.file) {
       toast.error("Please select a file");
       return;
@@ -68,15 +68,15 @@ const ProjectMedia = () => {
       formData.append("file", uploadForm.file);
       formData.append("is_restricted", uploadForm.is_restricted);
 
-      await uploadProjectMedia(id, formData);
-      
+      await developerService.uploadProjectMedia(id, formData);
+
       toast.success("Media uploaded successfully!");
       setUploadForm({ type: "IMAGE", file: null, is_restricted: false });
-      
+
       // Reset file input
       const fileInput = document.getElementById("file-input");
       if (fileInput) fileInput.value = "";
-      
+
       // Refresh media list
       fetchMedia();
     } catch (err) {

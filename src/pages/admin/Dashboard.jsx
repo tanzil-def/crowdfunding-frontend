@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getAdminDashboard } from "../../services/api";
+import adminService from "../../api/adminService";
 import { motion } from "framer-motion";
 import {
   BarChart,
@@ -42,7 +42,7 @@ const AdminDashboard = () => {
   const fetchDashboard = async () => {
     try {
       setLoading(true);
-      const res = await getAdminDashboard();
+      const res = await adminService.getDashboardSummary();
       // Handle potential { success: true, data: { ... } } wrapper
       const dashData = res.data || res;
       setDashboard(dashData);

@@ -1,32 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Bell, LogOut, Search } from "lucide-react";
 import NotificationCenter from "../Notifications/NotificationCenter";
-import { getNotifications } from "../../services/api";
+import { useSelector, useDispatch } from "react-redux";
+import { logout } from "../../store/slices/userSlice";
+import authService from "../../api/authService";
 
 const PrivateHeader = () => {
   const [showNotifications, setShowNotifications] = useState(false);
-  const [hasUnread, setHasUnread] = useState(false);
+  const { unreadCount } = useSelector((state) => state.notifications || { unreadCount: 0 });
+  const dispatch = useDispatch();
 
-  useEffect(() => {
-    checkUnread();
-    // Poll for notifications every 30 seconds
-    const interval = setInterval(checkUnread, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const checkUnread = async () => {
-    try {
-      const res = await getNotifications();
-      const data = res.data || res;
-      const unreadCount = data.results?.filter(n => !n.is_read).length || 0;
-      setHasUnread(unreadCount > 0);
-    } catch (err) {
-      console.error("Unread check failed:", err);
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.clear();
+  const handleLogout = async () => {
+    await authService.logout();
+    dispatch(logout());
     window.location.href = "/login";
   };
 
@@ -48,8 +34,10 @@ const PrivateHeader = () => {
             }`}
         >
           <Bell size={20} />
-          {hasUnread && (
-            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-slate-900 animate-pulse" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white border-2 border-[#020617] animate-pulse">
+              {unreadCount}
+            </span>
           )}
         </button>
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { getMyProjects, getProjectMedia, submitProjectForReview } from "../../services/api";
+import developerService from "../../api/developerService";
 import { motion } from "framer-motion";
 import {
   Plus,
@@ -34,7 +34,7 @@ const MyProjects = () => {
         params.status = filter;
       }
 
-      const res = await getMyProjects(params);
+      const res = await developerService.getMyProjects(params);
       // Handle potential { success: true, data: { ... } } wrapper
       const data = res.data || res;
       setProjects(data.results || []);
@@ -166,7 +166,7 @@ const ProjectCard = ({ project, index, onRefresh }) => {
   useEffect(() => {
     const fetchMedia = async () => {
       try {
-        const mediaData = await getProjectMedia(project.id);
+        const mediaData = await developerService.getProjectMedia(project.id);
         if (mediaData.results && mediaData.results.length > 0) {
           // Find the first IMAGE type media
           const imageItem = mediaData.results.find(m => m.type === "IMAGE") || mediaData.results[0];
@@ -184,7 +184,7 @@ const ProjectCard = ({ project, index, onRefresh }) => {
 
     setSubmitting(true);
     try {
-      await submitProjectForReview(project.id);
+      await developerService.submitProjectForReview(project.id);
       toast.success("Project submitted for review successfully!");
       if (onRefresh) onRefresh();
     } catch (err) {

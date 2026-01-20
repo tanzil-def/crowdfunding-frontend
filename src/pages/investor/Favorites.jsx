@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getFavorites, removeFromFavorites } from "../../services/api";
+import investorService from "../../api/investorService";
 import { motion } from "framer-motion";
 import { Heart, TrendingUp, DollarSign, Calendar, Trash2, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -16,7 +16,7 @@ const Favorites = () => {
   const fetchFavorites = async () => {
     try {
       setLoading(true);
-      const data = await getFavorites();
+      const data = await investorService.getFavorites();
       setFavorites(data.results || []);
     } catch (err) {
       toast.error("Failed to load favorites");
@@ -27,7 +27,7 @@ const Favorites = () => {
 
   const handleRemove = async (id) => {
     try {
-      await removeFromFavorites(id);
+      await investorService.removeFromFavorites(id);
       toast.success("Removed from favorites");
       fetchFavorites();
     } catch (err) {

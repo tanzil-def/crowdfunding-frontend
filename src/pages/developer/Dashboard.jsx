@@ -14,7 +14,7 @@ import {
   FileEdit,
   LayoutDashboard
 } from 'lucide-react';
-import { getDeveloperDashboard, getDeveloperProjects } from '../../services/api';
+import developerService from '../../api/developerService';
 import { toast } from 'react-hot-toast';
 
 const LocalMoney = ({ amount }) => (
@@ -48,8 +48,8 @@ export default function DeveloperDashboard() {
     try {
       setLoading(true);
       const [dashRes, projectsRes] = await Promise.all([
-        getDeveloperDashboard(),
-        getDeveloperProjects({ page_size: 5 })
+        developerService.getDashboardSummary(),
+        developerService.getMyProjects({ page_size: 5 })
       ]);
 
       // Handle potential { success: true, data: { ... } } wrapper for dashboard

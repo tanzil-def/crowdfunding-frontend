@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { compareProjects, browseProjects } from "../../services/api";
+import investorService from "../../api/investorService";
 import { motion } from "framer-motion";
 import {
   Plus,
@@ -38,7 +38,7 @@ const CompareProjects = () => {
     try {
       const params = { page_size: 20 };
       if (search) params.search = search;
-      const data = await browseProjects(params);
+      const data = await investorService.browseProjects(params);
       setAvailableProjects(data.results || []);
     } catch (err) {
       toast.error("Failed to load projects");
@@ -48,7 +48,7 @@ const CompareProjects = () => {
   const fetchCompareData = async () => {
     try {
       setLoading(true);
-      const data = await compareProjects({ ids: selectedProjects.join(',') });
+      const data = await investorService.compareProjects({ ids: selectedProjects.join(',') });
       setCompareData(data.results || []);
     } catch (err) {
       toast.error("Failed to compare projects");

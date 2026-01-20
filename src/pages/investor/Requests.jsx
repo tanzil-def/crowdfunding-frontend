@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getMyAccessRequests } from "../../services/api";
+import investorService from "../../api/investorService";
 import { motion } from "framer-motion";
 import {
   Lock,
@@ -30,7 +30,7 @@ const AccessRequests = () => {
       if (filter !== "ALL") {
         params.status = filter;
       }
-      const data = await getMyAccessRequests(params);
+      const data = await investorService.getMyAccessRequests(params);
       setRequests(data.results || []);
     } catch (err) {
       toast.error("Failed to load access requests");
@@ -123,11 +123,10 @@ const AccessRequests = () => {
             <button
               key={status}
               onClick={() => setFilter(status)}
-              className={`px-6 py-3 rounded-xl font-semibold transition-all whitespace-nowrap ${
-                filter === status
-                  ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/50"
-                  : "bg-slate-700/50 text-gray-300 hover:bg-slate-700"
-              }`}
+              className={`px-6 py-3 rounded-xl font-semibold transition-all whitespace-nowrap ${filter === status
+                ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/50"
+                : "bg-slate-700/50 text-gray-300 hover:bg-slate-700"
+                }`}
             >
               {status}
             </button>
@@ -208,18 +207,16 @@ const AccessRequests = () => {
                       {(request.status === "REJECTED" || request.status === "REVOKED") &&
                         request.admin_reason && (
                           <div
-                            className={`rounded-xl p-4 border ${
-                              request.status === "REJECTED"
-                                ? "bg-red-500/10 border-red-500/30"
-                                : "bg-orange-500/10 border-orange-500/30"
-                            }`}
+                            className={`rounded-xl p-4 border ${request.status === "REJECTED"
+                              ? "bg-red-500/10 border-red-500/30"
+                              : "bg-orange-500/10 border-orange-500/30"
+                              }`}
                           >
                             <p
-                              className={`text-sm mb-2 flex items-center gap-2 ${
-                                request.status === "REJECTED"
-                                  ? "text-red-400"
-                                  : "text-orange-400"
-                              }`}
+                              className={`text-sm mb-2 flex items-center gap-2 ${request.status === "REJECTED"
+                                ? "text-red-400"
+                                : "text-orange-400"
+                                }`}
                             >
                               <AlertCircle className="w-4 h-4" />
                               Admin Response:

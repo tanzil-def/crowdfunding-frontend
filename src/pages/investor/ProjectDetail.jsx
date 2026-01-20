@@ -1,12 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import {
-  getProjectDetail,
-  requestRestrictedAccess,
-  getProjectMedia,
-  addToFavorites,
-  removeFromFavorites,
-} from "../../services/api";
+import investorService from "../../api/investorService";
+import developerService from "../../api/developerService";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   DollarSign,
@@ -48,8 +43,8 @@ const ProjectDetail = () => {
     try {
       setLoading(true);
       const [projectRes, mediaRes] = await Promise.all([
-        getProjectDetail(id),
-        getProjectMedia(id),
+        investorService.getProjectDetail(id),
+        developerService.getProjectMedia(id),
       ]);
 
       // Handle potential { success: true, data: { ... } } wrapper
@@ -72,7 +67,7 @@ const ProjectDetail = () => {
     }
 
     try {
-      await requestRestrictedAccess(id, accessReason);
+      await investorService.requestAccess(id, accessReason);
       toast.success("Access request submitted successfully!");
       setShowAccessModal(false);
       setAccessReason("");
@@ -85,11 +80,11 @@ const ProjectDetail = () => {
   const handleToggleFavorite = async () => {
     try {
       if (isFavorite) {
-        await removeFromFavorites(project.favorite_id);
+        await investorService.removeFromFavorites(project.favorite_id);
         setIsFavorite(false);
         toast.success("Removed from favorites");
       } else {
-        await addToFavorites(id);
+        await investorService.addToFavorites(id);
         setIsFavorite(true);
         toast.success("Added to favorites");
       }

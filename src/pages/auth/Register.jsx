@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { registerUser } from "../../services/api";
+import authService from "../../api/authService";
 import GoogleLoginButton from "../../components/GoogleLoginButton";
 import { toast } from "react-hot-toast";
 
@@ -32,7 +32,8 @@ const Register = () => {
 
     setLoading(true);
     try {
-      const response = await registerUser(formData);
+      const res = await authService.register(formData);
+      const response = res.data || res;
       if (response.success) {
         if (response.data.verification_token) {
           navigate(`/verify-email?token=${response.data.verification_token}&email=${response.data.email}`);

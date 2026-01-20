@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { requestPasswordReset } from "../../services/api";
+import authService from "../../api/authService";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -15,7 +15,7 @@ const ForgotPassword = () => {
     setLoading(true);
 
     try {
-      const response = await requestPasswordReset(email);
+      const response = await authService.requestPasswordReset(email);
       setMessage(response.message || "Password reset link sent to your email!");
     } catch (err) {
       setError(err.response?.data?.error || "Something went wrong. Please try again.");

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getProjectDetail, initiateInvestment } from "../../services/api";
+import investorService from "../../api/investorService";
 import { motion } from "framer-motion";
 import {
   DollarSign,
@@ -31,7 +31,7 @@ const InvestPage = () => {
   const fetchProject = async () => {
     try {
       setLoading(true);
-      const data = await getProjectDetail(id);
+      const data = await investorService.getProjectDetail(id);
       setProject(data);
     } catch (err) {
       toast.error("Failed to load project details");
@@ -60,8 +60,8 @@ const InvestPage = () => {
     try {
       setProcessing(true);
       const idempotencyKey = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
-      const response = await initiateInvestment({
+
+      const response = await investorService.initiateInvestment({
         project_id: id,
         shares_requested: shares,
         idempotency_key: idempotencyKey,
@@ -70,13 +70,13 @@ const InvestPage = () => {
       // In production, this would redirect to payment gateway
       // For sandbox, we'll simulate the process
       toast.success("Investment initiated! Redirecting to payment...");
-      
+
       // Simulate payment redirect
       setTimeout(() => {
         toast.success("Payment successful! Investment recorded.");
         navigate("/investor/investments");
       }, 2000);
-      
+
     } catch (err) {
       toast.error(err.response?.data?.detail || "Failed to initiate investment");
     } finally {
