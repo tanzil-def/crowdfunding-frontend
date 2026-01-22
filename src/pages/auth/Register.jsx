@@ -11,7 +11,7 @@ const Register = () => {
     email: "",
     password: "",
     password_confirm: "",
-    role: "",
+    role: "INVESTOR",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -32,18 +32,39 @@ const Register = () => {
 
     setLoading(true);
     try {
-      const res = await authService.register(formData);
-      const response = res.data || res;
-      if (response.success) {
-        if (response.data.verification_token) {
-          navigate(`/verify-email?token=${response.data.verification_token}&email=${response.data.email}`);
-        } else {
-          toast.success("Registration successful! Please check your email.");
-          navigate("/login");
+      const response = await authService.register(formData);
+
+      // Since authService returns data.data (the user object) on success,
+      // we can assume if it didn't throw, it was successful.
+      toast.success("Registration successful! Please check your email.");
+      navigate("/login");
+
+    } catch (err) {
+      console.error("Registration Error:", err.response?.data);
+
+      // Extract detailed error messages
+      const errorData = err.response?.data;
+      let errorMsg = "Registration failed";
+
+      if (errorData) {
+        if (typeof errorData === 'string') {
+          errorMsg = errorData;
+        } else if (errorData.message) {
+          errorMsg = errorData.message;
+        } else if (typeof errorData === 'object') {
+          // Handle DRF validation error object e.g. { email: ["..."], role: ["..."] }
+          const details = Object.entries(errorData)
+            .map(([field, msgs]) => {
+              const msg = Array.isArray(msgs) ? msgs[0] : msgs;
+              return `${field}: ${msg}`;
+            })
+            .join(" | ");
+          errorMsg = details || errorMsg;
         }
       }
-    } catch (err) {
-      setError(err.response?.data?.password?.[0] || err.response?.data?.detail || "Registration failed");
+
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -108,6 +129,7 @@ const Register = () => {
               placeholder="email@example.com"
               className="w-full px-5 py-3 bg-slate-950/80 border border-slate-700 rounded-2xl text-gray-100 placeholder-gray-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-inner"
               required
+              autoComplete="email"
             />
           </div>
 

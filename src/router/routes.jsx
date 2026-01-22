@@ -58,11 +58,19 @@ import NotificationCenter from "../pages/notifications/NotificationCenter";
 // ==========================
 // PUBLIC LAYOUT
 // ==========================
+import Footer from "../components/Footer/Footer";
+
+// ==========================
+// PUBLIC LAYOUT
+// ==========================
 const PublicLayout = () => (
-  <>
+  <div className="flex flex-col min-h-screen">
     <PublicHeader />
-    <Outlet />
-  </>
+    <main className="flex-1">
+      <Outlet />
+    </main>
+    <Footer />
+  </div>
 );
 
 // ==========================

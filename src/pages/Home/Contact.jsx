@@ -10,7 +10,7 @@ const Contact = () => {
   return (
     <section
       id="contact"
-      className="lg:h-screen flex flex-col md:flex-row justify-around p-4 lg:pt-16 bg-light-backgroundColor text-dark-cardBgColor"
+      className="flex flex-col md:flex-row justify-around p-4 py-16 lg:py-24 bg-dark-backgroundColor text-dark-primaryTextColor"
     >
       <div className="sm:mr-8">
         <div className="font-bold text-2xl sm:text-3xl pt-6 sm:pt-16 text-center">

@@ -64,16 +64,13 @@ const CreateProject = () => {
     try {
       const submitData = {
         title: formData.title || "Untitled Project",
-        short_description: formData.short_description || formData.description?.substring(0, 150) || "No description provided",
         description: formData.description || "No description provided",
         category: formData.category || "OTHER",
         duration_days: parseInt(formData.duration_days) || 30,
-        total_value: parseFloat(formData.total_project_value) || 0,
+        total_project_value: parseFloat(formData.total_project_value) || 0,
         total_shares: parseInt(formData.total_shares) || 1,
-        financial_projections: formData.restricted_fields || "",
-        has_restricted_fields: !!formData.restricted_fields,
-        has_3d_model: !!files.model_3d,
-        is_3d_public: !formData.is_3d_restricted,
+        restricted_fields: formData.restricted_fields ? formData.restricted_fields.split(",").map(f => f.trim()) : [],
+        is_3d_restricted: !!formData.is_3d_restricted,
       };
 
       console.log("Submitting Project Data:", submitData);
@@ -128,16 +125,13 @@ const CreateProject = () => {
     try {
       const submitData = {
         title: formData.title,
-        short_description: formData.short_description || formData.description?.substring(0, 150),
         description: formData.description,
         category: formData.category,
         duration_days: parseInt(formData.duration_days) || 30,
-        total_value: parseFloat(formData.total_project_value) || 0,
+        total_project_value: parseFloat(formData.total_project_value) || 0,
         total_shares: parseInt(formData.total_shares) || 1,
-        financial_projections: formData.restricted_fields || "",
-        has_restricted_fields: !!formData.restricted_fields,
-        has_3d_model: !!files.model_3d,
-        is_3d_public: !formData.is_3d_restricted,
+        restricted_fields: formData.restricted_fields ? formData.restricted_fields.split(",").map(f => f.trim()) : [],
+        is_3d_restricted: !!formData.is_3d_restricted,
       };
 
       console.log("Submitting and Publishing Project Data:", submitData);
