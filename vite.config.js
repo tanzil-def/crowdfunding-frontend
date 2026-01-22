@@ -14,7 +14,17 @@ export default defineConfig({
     },
   },
   server: {
+    host: '0.0.0.0', // Bind to all network interfaces
     port: 5173,
+    strictPort: false, // Allow fallback to another port if 5173 is busy
+    // Fix for ERR_INTERNET_DISCONNECTED in DevTools
+    hmr: {
+      overlay: true,
+      clientPort: 5173,
+    },
+    watch: {
+      usePolling: true, // Fix for file watching on some systems
+    },
     proxy: {
       "/api": {
         target: "http://localhost:8000",
