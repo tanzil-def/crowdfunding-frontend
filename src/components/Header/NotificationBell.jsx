@@ -1,12 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Check, X, Clock, CheckCircle, AlertCircle, DollarSign, Lock, Unlock } from 'lucide-react';
+import { Bell } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { markRead, setNotifications } from '../../store/slices/notificationSlice';
-import { useNotificationWebSocket } from '../../hooks/useNotificationWebSocket';
-import investorService from '../../api/investorService';
-import developerService from '../../api/developerService';
+import { markRead, setNotifications, markAllRead as markAllReadAction } from '../../store/slices/notificationSlice';
+import notificationService from '../../api/notificationService';
+import { getNotificationIcon, getTimeAgo, getNotificationRoute } from '../../utils/notificationUtils';
 import { toast } from 'react-hot-toast';
 
 const NotificationBell = () => {
@@ -15,14 +14,11 @@ const NotificationBell = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { notifications, unreadCount, wsConnected } = useSelector((state) => state.notifications);
+  const { notifications, unreadCount } = useSelector((state) => state.notifications);
   const user = useSelector((state) => state.user.user);
 
-  // Initialize WebSocket connection
-  useNotificationWebSocket(user);
-
+  // Fetch notifications on mount
   useEffect(() => {
-    // Fetch initial notifications
     fetchNotifications();
 
     // Click outside to close
@@ -33,131 +29,63 @@ const NotificationBell = () => {
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchNotifications = async () => {
     try {
-      const service = user?.role === 'DEVELOPER' ? developerService : investorService;
-      const res = await service.getNotifications();
-      const data = res.data || res;
+      const data = await notificationService.getNotifications();
       dispatch(setNotifications(data.results || []));
     } catch (err) {
       console.error('Failed to fetch notifications:', err);
     }
   };
 
-  // Mark all unread notifications as read when opening dropdown
-  const handleBellClick = async () => {
-    const newIsOpen = !isOpen;
-    setIsOpen(newIsOpen);
-
-    // If opening the dropdown and there are unread notifications, mark them all as read
-    if (newIsOpen && unreadCount > 0) {
-      const unreadNotifications = notifications.filter(n => !n.is_read);
-
-      try {
-        const service = user?.role === 'DEVELOPER' ? developerService : investorService;
-
-        // Mark all unread as read in parallel
-        await Promise.all(
-          unreadNotifications.map(notification =>
-            service.markNotificationRead(notification.id)
-              .then(() => dispatch(markRead(notification.id)))
-              .catch(err => console.error(`Failed to mark notification ${notification.id} as read:`, err))
-          )
-        );
-      } catch (err) {
-        console.error('Failed to mark notifications as read:', err);
-      }
-    }
-  };
+  // derived state: sorted (newest first) and sliced (max 4)
+  const displayNotifications = [...notifications]
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 4);
 
   const handleNotificationClick = async (notification) => {
-    // Navigate based on notification type and metadata
-    const { type, metadata } = notification;
-    const role = user?.role?.toLowerCase() || 'investor';
+    // 1. Mark as read immediately in UI and Backend
+    if (!notification.is_read) {
+      try {
+        await notificationService.markNotificationRead(notification.id);
+        dispatch(markRead(notification.id));
+      } catch (err) {
+        console.error('Failed to mark read:', err);
+      }
+    }
 
-    // Close dropdown first for immediate feedback
+    // 2. Navigate based on type
     setIsOpen(false);
 
-    // Determine navigation path based on notification type
-    let navigationPath = null;
-
-    if (type.includes('PROJECT')) {
-      if (metadata?.project_id) {
-        // For developers, go to their project detail page
-        // For investors/admins, go to project view page
-        if (role === 'developer') {
-          navigationPath = `/developer/projects/${metadata.project_id}`;
-        } else if (role === 'admin') {
-          navigationPath = `/admin/projects/${metadata.project_id}`;
-        } else {
-          navigationPath = `/investor/projects/${metadata.project_id}`;
-        }
-      } else {
-        // Fallback to projects list
-        navigationPath = `/${role}/projects`;
-      }
-    } else if (type.includes('PAYMENT') || type.includes('INVESTMENT')) {
-      if (metadata?.investment_id) {
-        navigationPath = `/investor/investments/${metadata.investment_id}`;
-      } else {
-        navigationPath = `/investor/investments`;
-      }
-    } else if (type.includes('ACCESS')) {
-      if (metadata?.project_id) {
-        navigationPath = `/investor/projects/${metadata.project_id}`;
-      } else if (metadata?.access_request_id) {
-        navigationPath = `/investor/requests`;
-      } else {
-        navigationPath = `/${role}/dashboard`;
-      }
-    } else {
-      // Default fallback to dashboard
-      navigationPath = `/${role}/dashboard`;
-    }
-
-    // Navigate to the determined path
-    if (navigationPath) {
-      navigate(navigationPath);
+    try {
+      const route = getNotificationRoute(notification, user?.role || 'investor');
+      navigate(route);
+    } catch (error) {
+      console.error("Error determining notification route:", error);
+      // Fallback navigation
+      navigate(`/${user?.role?.toLowerCase() || 'investor'}/notifications`);
     }
   };
 
-  const getNotificationIcon = (type) => {
-    const iconMap = {
-      PROJECT_APPROVED: <CheckCircle className="text-emerald-400" size={18} />,
-      PROJECT_REJECTED: <X className="text-red-400" size={18} />,
-      PROJECT_SUBMITTED: <Bell className="text-blue-400" size={18} />,
-      PROJECT_CHANGES_REQUESTED: <AlertCircle className="text-yellow-400" size={18} />,
-      PAYMENT_SUCCESS: <DollarSign className="text-emerald-400" size={18} />,
-      PAYMENT_FAILED: <AlertCircle className="text-red-400" size={18} />,
-      PAYMENT_PENDING: <Clock className="text-yellow-400" size={18} />,
-      ACCESS_APPROVED: <Unlock className="text-emerald-400" size={18} />,
-      ACCESS_REJECTED: <Lock className="text-red-400" size={18} />,
-      ACCESS_REQUESTED: <Lock className="text-blue-400" size={18} />,
-      ACCESS_REVOKED: <Lock className="text-orange-400" size={18} />,
-    };
-    return iconMap[type] || <Bell className="text-blue-400" size={18} />;
-  };
+  const markAllRead = async () => {
+    if (unreadCount === 0) return;
 
-  const getTimeAgo = (dateString) => {
-    const now = new Date();
-    const past = new Date(dateString);
-    const diffMs = now - past;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    return `${diffDays}d ago`;
+    try {
+      await notificationService.markAllNotificationsAsRead();
+      dispatch(markAllReadAction());
+      toast.success("All marked as read");
+    } catch (error) {
+      console.error("Failed to mark all read:", error);
+      toast.error("Failed to mark all as read");
+    }
   };
 
   return (
     <div className="relative" ref={dropdownRef}>
       <button
-        onClick={handleBellClick}
+        onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 rounded-full hover:bg-slate-800/50 transition-all group"
       >
         <Bell size={22} className="text-slate-300 group-hover:text-emerald-400 transition-colors" />
@@ -166,19 +94,13 @@ const NotificationBell = () => {
         {unreadCount > 0 && (
           <motion.span
             initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="absolute -top-1 -right-1 h-5 w-5 bg-emerald-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-slate-900"
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ repeat: Infinity, duration: 2 }}
+            className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-slate-900 shadow-lg shadow-red-500/50"
           >
             {unreadCount > 9 ? '9+' : unreadCount}
           </motion.span>
         )}
-
-        {/* WebSocket Connection Indicator */}
-        <span
-          className={`absolute bottom-0 right-0 h-2 w-2 rounded-full border-2 border-slate-900 ${wsConnected ? 'bg-emerald-500' : 'bg-slate-500'
-            }`}
-          title={wsConnected ? 'Connected' : 'Disconnected'}
-        />
       </button>
 
       <AnimatePresence>
@@ -201,12 +123,16 @@ const NotificationBell = () => {
                   </span>
                 )}
               </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="text-slate-400 hover:text-white transition-colors p-1 hover:bg-slate-700 rounded-lg"
-              >
-                <X size={18} />
-              </button>
+              <div className="flex items-center gap-2">
+                {unreadCount > 0 && (
+                  <button
+                    onClick={markAllRead}
+                    className="text-xs text-slate-400 hover:text-emerald-400 transition-colors"
+                  >
+                    Mark all read
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Notifications List */}
@@ -219,38 +145,36 @@ const NotificationBell = () => {
                 </div>
               ) : (
                 <div className="divide-y divide-slate-700/30">
-                  {notifications.map((notification) => (
+                  {displayNotifications.map((notification) => (
                     <motion.div
                       key={notification.id}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       onClick={() => handleNotificationClick(notification)}
-                      className={`p-4 hover:bg-slate-800/50 transition-all cursor-pointer relative group ${!notification.is_read ? 'bg-emerald-500/[0.03]' : ''
+                      className={`p-4 hover:bg-slate-800/50 transition-all cursor-pointer relative group ${!notification.is_read ? 'bg-slate-800' : ''
                         }`}
                     >
-                      {/* Unread Indicator */}
+                      {/* Unread Indicator Bar */}
                       {!notification.is_read && (
                         <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500" />
                       )}
 
                       <div className="flex gap-3">
-                        <div className="mt-1 flex-shrink-0">
+                        <div className="mt-1 flex-shrink-0 text-xl">
                           {getNotificationIcon(notification.type)}
                         </div>
                         <div className="flex-1 min-w-0">
                           {notification.title && (
-                            <p className={`text-sm font-semibold mb-1 ${!notification.is_read ? 'text-white' : 'text-slate-300'
-                              }`}>
+                            <p className="text-sm font-semibold mb-1 text-white">
                               {notification.title}
                             </p>
                           )}
-                          <p className={`text-sm ${!notification.is_read ? 'text-slate-300' : 'text-slate-400'
+                          <p className={`text-sm ${!notification.is_read ? 'text-slate-200 font-medium' : 'text-slate-400'
                             }`}>
                             {notification.message}
                           </p>
                           <div className="flex items-center gap-2 mt-2 text-[10px] text-slate-500 uppercase tracking-wider">
-                            <Clock size={10} />
-                            {getTimeAgo(notification.created_at)}
+                            <span>{getTimeAgo(notification.created_at)}</span>
                           </div>
                         </div>
                       </div>
@@ -261,19 +185,26 @@ const NotificationBell = () => {
             </div>
 
             {/* Footer */}
-            {notifications.length > 0 && (
-              <div className="p-3 bg-slate-800/50 border-t border-slate-700/50 flex items-center justify-center">
+            <div className="p-3 bg-slate-800/50 border-t border-slate-700/50 flex items-center justify-between">
+              <button
+                onClick={fetchNotifications}
+                className="text-xs font-bold text-slate-400 hover:text-white transition-colors"
+              >
+                Refresh
+              </button>
+
+              {notifications.length > 0 && (
                 <button
                   onClick={() => {
                     setIsOpen(false);
-                    navigate(`/${user.role.toLowerCase()}/notifications`);
+                    navigate(`/${user?.role?.toLowerCase() || 'investor'}/notifications`);
                   }}
                   className="text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-colors"
                 >
-                  View All Notifications
+                  View All
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -53,12 +53,13 @@ export const getNotificationRoute = (notification, userRole) => {
             if (role === 'developer') {
                 return `/developer/projects/${metadata.project_id}`;
             } else if (role === 'admin') {
-                return `/admin/projects/${metadata.project_id}`;
+                // Admin doesn't have a direct project detail route currently
+                return `/admin/pending-projects`;
             } else {
                 return `/investor/projects/${metadata.project_id}`;
             }
         }
-        return `/${role}/projects`;
+        return role === 'admin' ? `/admin/pending-projects` : `/${role}/projects`;
     }
 
     // Payment/Investment notifications

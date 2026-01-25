@@ -42,7 +42,6 @@ const Sidebar = ({ role }) => {
       { icon: <Briefcase size={20} />, label: "Marketplace", path: "/investor/browse" },
       { icon: <DollarSign size={20} />, label: "My Investments", path: "/investor/my-investments" },
       { icon: <Briefcase size={20} />, label: "Compare Projects", path: "/investor/compare" },
-      { icon: <Bell size={20} />, label: "Notifications", path: "/notifications" },
       { icon: <Lock size={20} />, label: "Access Requests", path: "/investor/requests" },
       { icon: <Settings size={20} />, label: "Account", path: "/account" },
     ],
@@ -96,16 +95,28 @@ const Sidebar = ({ role }) => {
                 className={`flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all ${isActive(item.path)
                   ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-lg shadow-emerald-500/5"
                   : "text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent"
-                  }`}
+                  } ${item.isIconOnly ? 'justify-center' : ''}`}
+                title={item.isIconOnly ? item.label : ''}
               >
-                <span className="mr-3">{item.icon}</span>
-                {item.label}
+                <div className="relative">
+                  <span className={item.isIconOnly ? "" : "mr-3"}>{item.icon}</span>
+                  {/* Badge for Notifications */}
+                  {item.label === "Notifications" && (
+                    <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                    </span>
+                  )}
+                </div>
+
+                {!item.isIconOnly && item.label}
+
                 {item.label === "Pending Projects" && pendingProjectsCount > 0 && (
                   <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                     {pendingProjectsCount}
                   </span>
                 )}
-                {isActive(item.path) && !(item.label === "Pending Projects" && pendingProjectsCount > 0) && (
+                {isActive(item.path) && !(item.label === "Pending Projects" && pendingProjectsCount > 0) && !item.isIconOnly && (
                   <div className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
                 )}
               </Link>

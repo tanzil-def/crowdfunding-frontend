@@ -1,467 +1,321 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import investorService from "../../api/investorService";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Plus,
-  X,
-  DollarSign,
-  TrendingUp,
-  Calendar,
-  Users,
-  Lock,
-  Unlock,
-  Search,
-  AlertCircle,
-  CheckCircle,
-  Eye,
+  Search, Filter, Heart, CheckCircle2, ArrowRight,
+  Lock, Unlock, LayoutGrid, X, Info, TrendingUp, DollarSign
 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import investorService from "../../api/investorService";
 
 const CompareProjects = () => {
   const navigate = useNavigate();
-  const [selectedProjects, setSelectedProjects] = useState([]);
-  const [compareData, setCompareData] = useState([]);
-  const [availableProjects, setAvailableProjects] = useState([]);
-  const [showAddModal, setShowAddModal] = useState(false);
+
+  // States
+  const [projects, setProjects] = useState([]);
+  const [favoriteMap, setFavoriteMap] = useState({}); // Stores Project ID -> Favorite ID mapping
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [loading, setLoading] = useState(true);
 
+  // Selection for Comparison
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [compareData, setCompareData] = useState(null);
+  const [isComparing, setIsComparing] = useState(false);
+
+  const categories = ["All", "Sustainability", "Technology", "Infrastructure", "Energy"];
+
+  // 1. Fetch Projects & Favorites on Mount
   useEffect(() => {
-    fetchAvailableProjects();
-  }, [search]);
+    fetchData();
+  }, [search, selectedCategory]);
 
-  useEffect(() => {
-    if (selectedProjects.length >= 2) {
-      fetchCompareData();
-    } else {
-      setCompareData([]);
-    }
-  }, [selectedProjects]);
-
-  const fetchAvailableProjects = async () => {
+  const fetchData = async () => {
+    setLoading(true);
     try {
-      const params = { page_size: 20 };
-      if (search) params.search = search;
-      const data = await investorService.browseProjects(params);
-      setAvailableProjects(data.results || []);
-    } catch (err) {
-      toast.error("Failed to load projects");
-    }
-  };
+      const params = {
+        page_size: 24,
+        search: search,
+        category: selectedCategory === "All" ? undefined : selectedCategory
+      };
 
-  const fetchCompareData = async () => {
-    try {
-      setLoading(true);
-      const data = await investorService.compareProjects(selectedProjects);
-      setCompareData(data.projects || data.results || []);
+      // Fetching both projects and current favorites
+      const [projRes, favRes] = await Promise.all([
+        investorService.browseProjects(params),
+        investorService.getFavorites() // GET /api/v1/favorites/list/
+      ]);
+
+      setProjects(projRes.results || []);
+
+      // Map favorite results: { project_id: favorite_record_id }
+      const favMap = {};
+      if (favRes.results) {
+        favRes.results.forEach(fav => {
+          favMap[fav.project] = fav.id;
+        });
+      }
+      setFavoriteMap(favMap);
+
     } catch (err) {
-      console.error("Compare error:", err);
-      toast.error("Failed to compare projects");
+      console.error(err);
+      toast.error("Error connecting to server");
     } finally {
       setLoading(false);
     }
   };
 
-  const addProject = (projectId) => {
-    if (selectedProjects.length >= 4) {
-      toast.error("Maximum 4 projects can be compared");
-      return;
-    }
-    if (selectedProjects.includes(projectId)) {
-      toast.error("Project already added");
-      return;
-    }
-    setSelectedProjects([...selectedProjects, projectId]);
-    setShowAddModal(false);
-    toast.success("Project added to comparison");
-  };
+  // 2. Favorite Toggle Logic (POST/DELETE)
+  const toggleFavorite = async (e, projectId) => {
+    e.stopPropagation(); // Prevent selecting for comparison when clicking heart
+    const favoriteId = favoriteMap[projectId];
 
-  const removeProject = (projectId) => {
-    setSelectedProjects(selectedProjects.filter((id) => id !== projectId));
-    toast.success("Project removed from comparison");
-  };
-
-  const handleRequestAccess = async (projectId) => {
     try {
-      await investorService.requestAccess(projectId, "Requesting access to restricted fields for comparison");
-      toast.success("Access request sent successfully");
+      if (favoriteId) {
+        // DELETE /api/v1/favorites/{id}/
+        await investorService.removeFromFavorites(favoriteId);
+
+        // Update local state
+        setFavoriteMap(prev => {
+          const newMap = { ...prev };
+          delete newMap[projectId];
+          return newMap;
+        });
+        toast.success("Removed from favorites");
+      } else {
+        // POST /api/v1/favorites/
+        const res = await investorService.addToFavorites(projectId);
+
+        // Update local state with new favorite ID
+        setFavoriteMap(prev => ({
+          ...prev,
+          [projectId]: res.id
+        }));
+        toast.success("Added to favorites");
+      }
     } catch (err) {
-      toast.error("Failed to request access");
+      console.error(err);
+      toast.error("Could not update favorites");
     }
   };
 
-  const comparisonFields = [
-    { label: "Category", key: "category", icon: <TrendingUp size={14} /> },
-    {
-      label: "Total Value",
-      key: "total_project_value",
-      icon: <DollarSign size={14} />,
-      format: (v) => `$${parseFloat(v).toLocaleString()}`,
-      highlight: true
-    },
-    {
-      label: "Total Shares",
-      key: "total_shares",
-      format: (v) => v.toLocaleString(),
-      highlight: true
-    },
-    {
-      label: "Share Price",
-      key: "share_price",
-      icon: <DollarSign size={14} />,
-      format: (v) => `$${parseFloat(v).toFixed(2)}`,
-      highlight: true
-    },
-    {
-      label: "Shares Sold",
-      key: "shares_sold",
-      format: (v) => v.toLocaleString()
-    },
-    {
-      label: "Remaining Shares",
-      key: "remaining_shares",
-      format: (v) => v.toLocaleString(),
-      highlight: true
-    },
-    {
-      label: "Funding Progress",
-      key: "funding_percentage",
-      icon: <TrendingUp size={14} />,
-      format: (v) => `${v.toFixed(1)}%`,
-      highlight: true,
-      isProgress: true
-    },
-    {
-      label: "Duration",
-      key: "duration_days",
-      icon: <Calendar size={14} />,
-      format: (v) => `${v} days`
-    },
-    {
-      label: "Developer",
-      key: "developer_name",
-      icon: <Users size={14} />
-    },
-    {
-      label: "Created Date",
-      key: "created_at",
-      format: (v) => new Date(v).toLocaleDateString()
-    },
-  ];
-
-  const getHighlightClass = (field, value, allValues) => {
-    if (!field.highlight) return "";
-
-    const numericValues = allValues.map(v => parseFloat(v) || 0);
-    const max = Math.max(...numericValues);
-    const min = Math.min(...numericValues);
-    const current = parseFloat(value) || 0;
-
-    if (field.key === "funding_percentage" || field.key === "remaining_shares") {
-      if (current === max) return "bg-emerald-500/10 border-emerald-500/30";
-      if (current === min) return "bg-red-500/10 border-red-500/30";
-    } else if (field.key === "share_price") {
-      if (current === min) return "bg-emerald-500/10 border-emerald-500/30";
-      if (current === max) return "bg-yellow-500/10 border-yellow-500/30";
+  // 3. Comparison Logic (GET /api/v1/projects/compare/)
+  const handleCompare = async () => {
+    if (selectedIds.length < 2) return toast.error("Select at least 2 projects");
+    setIsComparing(true);
+    try {
+      const res = await investorService.compareProjects(selectedIds);
+      setCompareData(res.data || res); // Handle potentially nested response
+    } catch (err) {
+      toast.error("Comparison failed");
+    } finally {
+      setIsComparing(false);
     }
+  };
 
-    return "";
+  const toggleSelection = (id) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter(i => i !== id));
+    } else {
+      if (selectedIds.length >= 4) return toast.error("Max 4 projects");
+      setSelectedIds([...selectedIds, id]);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">
-            Compare Projects
-          </h1>
-          <p className="text-gray-400 text-lg">
-            Compare up to 4 projects side-by-side to make informed investment decisions
-          </p>
-        </motion.div>
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans">
 
-        {/* Add Project Button */}
-        {selectedProjects.length < 4 && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            onClick={() => setShowAddModal(true)}
-            className="mb-6 flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg hover:shadow-purple-500/50"
-          >
-            <Plus className="w-5 h-5" />
-            Add Project to Compare ({selectedProjects.length}/4)
-          </motion.button>
-        )}
+      {/* Header Area */}
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-black tracking-tight text-slate-800">INVESTOR <span className="text-blue-600">COMPARE</span></h1>
+          </div>
+          <div className="flex gap-4">
+            {selectedIds.length >= 2 && (
+              <motion.button
+                initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                onClick={handleCompare}
+                className="px-6 py-2 bg-blue-600 text-white rounded-full font-bold text-sm shadow-lg shadow-blue-200 flex items-center gap-2"
+              >
+                COMPARE {selectedIds.length} ITEMS <ArrowRight size={16} />
+              </motion.button>
+            )}
+          </div>
+        </div>
+      </header>
 
-        {/* Comparison Table */}
-        {selectedProjects.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-12 text-center"
-          >
-            <Search className="w-20 h-20 text-purple-400 mx-auto mb-4 opacity-50" />
-            <h2 className="text-2xl font-bold text-white mb-2">No Projects Selected</h2>
-            <p className="text-gray-400 mb-6">
-              Add at least 2 projects to compare their features side-by-side
-            </p>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold hover:from-purple-600 hover:to-pink-600 transition-all"
-            >
-              Get Started
-            </button>
-          </motion.div>
-        ) : selectedProjects.length === 1 ? (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-12 text-center"
-          >
-            <AlertCircle className="w-20 h-20 text-yellow-400 mx-auto mb-4 opacity-50" />
-            <h2 className="text-2xl font-bold text-white mb-2">Add One More Project</h2>
-            <p className="text-gray-400 mb-6">
-              You need at least 2 projects to start comparing
-            </p>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold hover:from-purple-600 hover:to-pink-600 transition-all"
-            >
-              Add Another Project
-            </button>
-          </motion.div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl overflow-hidden"
-          >
-            {loading ? (
-              <div className="flex items-center justify-center p-12">
-                <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
+      <div className="max-w-7xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+        {/* Filter Sidebar (GSM Arena Style) */}
+        <aside className="lg:col-span-3 space-y-6">
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+            <h3 className="text-sm font-black uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">
+              <Filter size={16} /> Filter Assets
+            </h3>
+
+            <div className="space-y-6">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input
+                  type="text"
+                  placeholder="Search project..."
+                  className="w-full pl-10 pr-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                  onChange={(e) => setSearch(e.target.value)}
+                />
               </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
+
+              <div>
+                <p className="text-[11px] font-bold text-slate-400 uppercase mb-3">Categories</p>
+                <div className="flex flex-col gap-2">
+                  {categories.map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => setSelectedCategory(cat)}
+                      className={`text-left px-4 py-2 rounded-xl text-sm font-semibold transition-all ${selectedCategory === cat
+                        ? "bg-blue-50 text-blue-600"
+                        : "text-slate-600 hover:bg-slate-50"
+                        }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        {/* Project Grid */}
+        <main className="lg:col-span-9">
+          {loading ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => <div key={i} className="h-80 bg-slate-200 animate-pulse rounded-3xl"></div>)}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+              {projects.map((project) => (
+                <motion.div
+                  layout
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                  key={project.id}
+                  className={`group relative bg-white rounded-[2rem] border-2 transition-all cursor-pointer overflow-hidden ${selectedIds.includes(project.id) ? "border-blue-500 shadow-xl shadow-blue-100" : "border-transparent shadow-sm"
+                    }`}
+                  onClick={() => toggleSelection(project.id)}
+                >
+                  {/* Top Actions */}
+                  <div className="absolute top-4 inset-x-4 flex justify-between z-10">
+                    <button
+                      onClick={(e) => toggleFavorite(e, project.id)}
+                      className={`p-2 rounded-full backdrop-blur-md transition-all shadow-sm ${favoriteMap[project.id] ? "bg-white text-red-500" : "bg-white/80 text-slate-400 hover:text-red-500"
+                        }`}
+                    >
+                      <Heart size={18} fill={favoriteMap[project.id] ? "currentColor" : "none"} />
+                    </button>
+                    {selectedIds.includes(project.id) && (
+                      <div className="bg-blue-600 text-white p-1 rounded-full"><CheckCircle2 size={20} /></div>
+                    )}
+                  </div>
+
+                  {/* Image Placeholder */}
+                  <div className="aspect-[4/5] bg-slate-100 relative overflow-hidden">
+                    <img
+                      src={project.image || project.thumbnail || `https://api.dicebear.com/7.x/shapes/svg?seed=${project.title}`}
+                      alt={project.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+
+                  <div className="p-5">
+                    <p className="text-[10px] font-black text-blue-600 uppercase mb-1 tracking-widest">{project.category}</p>
+                    <h3 className="font-bold text-slate-800 line-clamp-1 mb-3">{project.title}</h3>
+                    <div className="flex justify-between items-center">
+                      <span className="text-lg font-black text-slate-900">${project.share_price}</span>
+                      <div className="flex flex-col items-end">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase">Funding</span>
+                        <span className="text-xs font-bold text-emerald-500">{project.funding_percentage}%</span>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </main>
+      </div>
+
+      {/* Comparison Modal (GSM Arena Spec Style) */}
+      <AnimatePresence>
+        {compareData && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
+              className="bg-white w-full max-w-6xl max-h-[90vh] rounded-[3rem] overflow-hidden shadow-2xl flex flex-col"
+            >
+              <div className="p-8 border-b flex justify-between items-center">
+                <h2 className="text-2xl font-black text-slate-800 uppercase italic tracking-tighter">Technical <span className="text-blue-600">Specs</span></h2>
+                <button onClick={() => setCompareData(null)} className="p-3 bg-slate-100 hover:bg-slate-200 rounded-full transition-all">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-auto">
+                <table className="w-full border-collapse">
                   <thead>
-                    <tr className="bg-slate-700/50">
-                      <th className="p-4 text-left text-gray-400 font-semibold sticky left-0 bg-slate-700/50 z-10 min-w-[180px]">
-                        Feature
-                      </th>
-                      {compareData.map((project) => (
-                        <th key={project.id} className="p-4 text-center min-w-[250px]">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1">
-                              <h3 className="text-white font-bold text-lg mb-1">
-                                {project.title}
-                              </h3>
-                              <div className="flex items-center justify-center gap-2">
-                                <button
-                                  onClick={() => navigate(`/investor/projects/${project.id}`)}
-                                  className="text-purple-400 hover:text-purple-300 text-sm flex items-center gap-1"
-                                >
-                                  <Eye size={14} />
-                                  View Details
-                                </button>
-                              </div>
-                            </div>
-                            <button
-                              onClick={() => removeProject(project.id)}
-                              className="p-2 hover:bg-slate-600 rounded-lg transition-colors"
-                            >
-                              <X className="w-4 h-4 text-gray-400" />
-                            </button>
+                    <tr className="bg-slate-50">
+                      <th className="p-6 text-left text-xs font-black text-slate-400 uppercase border-b">Feature</th>
+                      {compareData.projects.map(p => (
+                        <th key={p.id} className="p-6 text-center border-b min-w-[200px]">
+                          <div className="w-20 h-24 bg-slate-200 rounded-xl mx-auto mb-3 overflow-hidden">
+                            <img src={p.image} className="w-full h-full object-cover" alt="" />
                           </div>
+                          <p className="font-black text-slate-800 text-sm">{p.title}</p>
                         </th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody>
-                    {comparisonFields.map((field, index) => (
-                      <tr
-                        key={field.key}
-                        className={index % 2 === 0 ? "bg-slate-700/20" : "bg-transparent"}
-                      >
-                        <td className="p-4 text-gray-300 font-semibold sticky left-0 bg-slate-800/90 z-10">
-                          <div className="flex items-center gap-2">
-                            {field.icon}
-                            {field.label}
-                          </div>
+                  <tbody className="divide-y divide-slate-100">
+                    {/* Rows */}
+                    {[
+                      { label: "Total Value", key: "total_project_value", icon: <DollarSign size={14} />, format: (v) => `$${parseFloat(v).toLocaleString()}` },
+                      { label: "Share Price", key: "share_price", icon: <TrendingUp size={14} />, format: (v) => `$${v}` },
+                      { label: "Duration", key: "duration_days", icon: <Info size={14} />, format: (v) => `${v} Days` },
+                      { label: "Developer", key: "developer_name", icon: <Info size={14} /> },
+                    ].map((row) => (
+                      <tr key={row.label} className="hover:bg-slate-50 transition-colors">
+                        <td className="p-6 font-bold text-slate-400 text-xs uppercase flex items-center gap-2">
+                          {row.icon} {row.label}
                         </td>
-                        {compareData.map((project) => {
-                          const value = project[field.key];
-                          const allValues = compareData.map(p => p[field.key]);
-                          const highlightClass = getHighlightClass(field, value, allValues);
-
-                          return (
-                            <td
-                              key={project.id}
-                              className={`p-4 text-center text-white border border-transparent ${highlightClass}`}
-                            >
-                              {field.isProgress ? (
-                                <div className="space-y-2">
-                                  <div className="text-sm font-semibold">
-                                    {field.format ? field.format(value) : value}
-                                  </div>
-                                  <div className="w-full bg-slate-700 rounded-full h-2">
-                                    <div
-                                      className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all"
-                                      style={{ width: `${Math.min(value, 100)}%` }}
-                                    />
-                                  </div>
-                                </div>
-                              ) : (
-                                field.format ? field.format(value) : value
-                              )}
-                            </td>
-                          );
-                        })}
+                        {compareData.projects.map(p => (
+                          <td key={p.id} className="p-6 text-center font-bold text-slate-700 text-sm">
+                            {p.has_access ? (row.format ? row.format(p[row.key]) : p[row.key]) : (
+                              <span className="text-amber-500 flex items-center justify-center gap-1"><Lock size={12} /> Locked</span>
+                            )}
+                          </td>
+                        ))}
                       </tr>
                     ))}
-
-                    {/* Restricted Fields Row */}
-                    <tr className="bg-slate-700/30">
-                      <td className="p-4 text-gray-300 font-semibold sticky left-0 bg-slate-700/30 z-10">
-                        <div className="flex items-center gap-2">
-                          <Lock size={14} />
-                          Restricted Access
-                        </div>
-                      </td>
-                      {compareData.map((project) => (
-                        <td key={project.id} className="p-4 text-center">
-                          {project.has_access ? (
-                            <div className="flex items-center justify-center gap-2 text-emerald-400">
-                              <Unlock size={16} />
-                              <span className="text-sm">Full Access</span>
-                            </div>
-                          ) : project.restricted_fields && project.restricted_fields.length > 0 ? (
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-center gap-2 text-yellow-400">
-                                <Lock size={16} />
-                                <span className="text-sm">{project.restricted_fields.length} fields locked</span>
-                              </div>
-                              <button
-                                onClick={() => handleRequestAccess(project.id)}
-                                className="text-xs px-3 py-1 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-all"
-                              >
-                                Request Access
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="flex items-center justify-center gap-2 text-gray-500">
-                              <CheckCircle size={16} />
-                              <span className="text-sm">No Restrictions</span>
-                            </div>
+                    {/* Access Row */}
+                    <tr className="bg-blue-50/50">
+                      <td className="p-6 font-bold text-blue-600 text-xs uppercase">Platform Access</td>
+                      {compareData.projects.map(p => (
+                        <td key={p.id} className="p-6 text-center">
+                          {p.has_access ? <span className="text-emerald-600 font-bold text-xs uppercase">Approved</span> : (
+                            <button className="text-[10px] font-black bg-blue-600 text-white px-4 py-2 rounded-lg">REQUEST ACCESS</button>
                           )}
-                        </td>
-                      ))}
-                    </tr>
-
-                    {/* Action Row */}
-                    <tr className="bg-slate-700/30">
-                      <td className="p-4 text-gray-300 font-semibold sticky left-0 bg-slate-700/30 z-10">
-                        Action
-                      </td>
-                      {compareData.map((project) => (
-                        <td key={project.id} className="p-4 text-center">
-                          <button
-                            onClick={() => navigate(`/investor/projects/${project.id}/invest`)}
-                            disabled={project.remaining_shares === 0}
-                            className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {project.remaining_shares > 0 ? "Invest Now" : "Fully Funded"}
-                          </button>
                         </td>
                       ))}
                     </tr>
                   </tbody>
                 </table>
               </div>
-            )}
-
-            {/* Footer Note */}
-            <div className="p-4 bg-slate-700/20 border-t border-slate-700/50 text-center">
-              <p className="text-xs text-gray-500">
-                <AlertCircle size={12} className="inline mr-1" />
-                Metrics are real-time. Highlighted values show best/worst performers. Restricted fields require admin approval.
-              </p>
-            </div>
+            </motion.div>
           </motion.div>
         )}
-
-        {/* Add Project Modal */}
-        <AnimatePresence>
-          {showAddModal && (
-            <div
-              className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-              onClick={() => setShowAddModal(false)}
-            >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                onClick={(e) => e.stopPropagation()}
-                className="bg-slate-800 border border-slate-700 rounded-2xl p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
-              >
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-white">Select Project to Compare</h2>
-                  <button
-                    onClick={() => setShowAddModal(false)}
-                    className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
-                  >
-                    <X className="w-5 h-5 text-gray-400" />
-                  </button>
-                </div>
-
-                {/* Search */}
-                <div className="relative mb-6">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search projects..."
-                    className="w-full pl-12 pr-4 py-3 bg-slate-700 text-white rounded-xl border border-slate-600 focus:border-purple-500 focus:outline-none"
-                  />
-                </div>
-
-                {/* Projects List */}
-                <div className="space-y-3">
-                  {availableProjects
-                    .filter((p) => !selectedProjects.includes(p.id))
-                    .map((project) => (
-                      <div
-                        key={project.id}
-                        onClick={() => addProject(project.id)}
-                        className="p-4 bg-slate-700/30 hover:bg-slate-700/50 rounded-xl cursor-pointer transition-colors"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <h3 className="text-white font-semibold mb-1">{project.title}</h3>
-                            <div className="flex items-center gap-3 text-sm text-gray-400">
-                              <span>{project.category}</span>
-                              <span>•</span>
-                              <span>${parseFloat(project.share_price).toFixed(2)}/share</span>
-                              <span>•</span>
-                              <span>{project.funding_percentage.toFixed(0)}% funded</span>
-                            </div>
-                          </div>
-                          <Plus className="w-5 h-5 text-purple-400" />
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
-      </div>
+      </AnimatePresence>
     </div>
   );
 };
