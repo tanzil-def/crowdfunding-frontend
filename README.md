@@ -29,9 +29,9 @@ High-performance, role-based crowdfunding ecosystem built with **React + Vite**.
 
 Here’s the **Home UI screenshot** of the platform:
 
-![Home UI](screenshots/Home_UIpage.png)
+![Home UI](screenshots/Home%20UIpage.png)
 
-> *Note: The image path is relative to the `README.md` file in the root directory.*
+> *Note: The image path is relative to the `README.md` file in the root directory. GitHub supports spaces using `%20`.*
 
 ---
 
