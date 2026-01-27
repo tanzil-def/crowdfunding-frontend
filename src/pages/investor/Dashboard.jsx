@@ -58,31 +58,31 @@ const InvestorDashboard = () => {
   const stats = [
     {
       label: "Portfolio Value",
-      value: dashboard?.portfolio_value || 0,
+      value: portfolio?.total_invested || 0,
       icon: Wallet,
       gradient: "from-cyan-500 via-blue-500 to-indigo-600",
       glow: "shadow-cyan-500/50",
       isMoney: true,
-      change: portfolio?.profit_loss_percentage ? `+${portfolio.profit_loss_percentage}%` : null,
+      change: null, // Backend doesn't provide change yet
     },
     {
-      label: "Total Investments",
-      value: dashboard?.total_investments || 0,
-      icon: DollarSign,
+      label: "Total Projects",
+      value: portfolio?.projects_invested || 0,
+      icon: Briefcase,
       gradient: "from-emerald-500 via-teal-500 to-green-600",
       glow: "shadow-emerald-500/50",
     },
     {
-      label: "Favorite Projects",
-      value: dashboard?.favorite_projects || 0,
+      label: "Total Shares",
+      value: portfolio?.total_shares_owned || 0,
       icon: PieIcon,
       gradient: "from-violet-500 via-purple-500 to-fuchsia-600",
       glow: "shadow-violet-500/50",
     },
     {
-      label: "Active Assets",
-      value: portfolio?.total_shares_owned || 0,
-      icon: Briefcase,
+      label: "Investments",
+      value: portfolio?.investment_count || 0,
+      icon: DollarSign,
       gradient: "from-amber-500 via-orange-500 to-red-600",
       glow: "shadow-amber-500/50",
     },
@@ -251,30 +251,29 @@ const InvestorDashboard = () => {
                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                   <TrendingUp className="w-24 h-24 text-cyan-400" />
                 </div>
-                <h3 className="text-2xl font-black text-white mb-6 uppercase tracking-tighter">Growth Matrix</h3>
+                <h3 className="text-2xl font-black text-white mb-6 uppercase tracking-tighter">Real-time Performance</h3>
                 <div className="p-6 bg-gradient-to-br from-cyan-500/10 to-violet-500/10 rounded-2xl border border-cyan-500/20 mb-6">
-                  <p className="text-cyan-400 text-xs font-black uppercase tracking-widest mb-1">Unrealized P&L</p>
-                  <p className="text-4xl font-black text-white tracking-tighter">$ {parseFloat(portfolio?.profit_loss || 0).toLocaleString()}</p>
+                  <p className="text-cyan-400 text-xs font-black uppercase tracking-widest mb-1">Total Assets Owned</p>
+                  <p className="text-4xl font-black text-white tracking-tighter">{portfolio?.total_shares_owned || 0} Shares</p>
                   <div className="mt-4 flex items-center gap-4">
                     <div className="flex-1 h-2.5 bg-slate-800 rounded-full overflow-hidden shadow-inner">
                       <motion.div
                         initial={{ width: 0 }}
-                        animate={{ width: `${portfolio?.profit_loss_percentage || 0}%` }}
+                        animate={{ width: "100%" }}
                         transition={{ duration: 1 }}
                         className="h-full bg-gradient-to-r from-cyan-500 to-violet-500 rounded-full shadow-lg shadow-cyan-500/50"
                       />
                     </div>
-                    <span className="text-cyan-400 font-black text-sm">+{portfolio?.profit_loss_percentage || 0}%</span>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 bg-slate-800/40 rounded-xl border border-slate-700/50">
-                    <p className="text-slate-500 text-[10px] font-black uppercase mb-1 tracking-widest">Risk Profile</p>
-                    <p className="text-sm font-black text-white">MODERATE</p>
+                    <p className="text-slate-500 text-[10px] font-black uppercase mb-1 tracking-widest">Active Projects</p>
+                    <p className="text-sm font-black text-white">{portfolio?.projects_invested || 0}</p>
                   </div>
                   <div className="p-4 bg-slate-800/40 rounded-xl border border-slate-700/50">
-                    <p className="text-slate-500 text-[10px] font-black uppercase mb-1 tracking-widest">Liquidity</p>
-                    <p className="text-sm font-black text-white">HIGH</p>
+                    <p className="text-slate-500 text-[10px] font-black uppercase mb-1 tracking-widest">Total Value</p>
+                    <p className="text-sm font-black text-white">${parseFloat(portfolio?.total_invested || 0).toLocaleString()}</p>
                   </div>
                 </div>
               </div>
