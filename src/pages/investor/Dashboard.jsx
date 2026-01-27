@@ -17,6 +17,7 @@ import { Link } from "react-router-dom";
 const InvestorDashboard = () => {
   const [dashboard, setDashboard] = useState(null);
   const [portfolio, setPortfolio] = useState(null);
+  const [recentTransactions, setRecentTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,12 +27,14 @@ const InvestorDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [dashRes, portfolioRes] = await Promise.all([
+      const [dashRes, portfolioRes, investmentsRes] = await Promise.all([
         investorService.getDashboardSummary(),
         investorService.getPortfolioSummary(),
+        investorService.getMyInvestments({ page_size: 5 })
       ]);
       setDashboard(dashRes.data || dashRes);
       setPortfolio(portfolioRes.data || portfolioRes);
+      setRecentTransactions(investmentsRes.results || []);
     } catch (err) {
       console.error("Failed to load dashboard:", err);
     } finally {
@@ -78,7 +81,7 @@ const InvestorDashboard = () => {
     },
     {
       label: "Active Assets",
-      value: dashboard?.total_shares_owned || 0,
+      value: portfolio?.total_shares_owned || 0,
       icon: Briefcase,
       gradient: "from-amber-500 via-orange-500 to-red-600",
       glow: "shadow-amber-500/50",
@@ -131,7 +134,7 @@ const InvestorDashboard = () => {
                   </div>
                 </div>
               )}
-              <Link to="/projects" className="group relative overflow-hidden">
+              <Link to="/investor/browse" className="group relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl blur-xl opacity-60 group-hover:opacity-100 transition-opacity" />
                 <div className="relative flex items-center gap-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white px-6 py-3.5 rounded-xl transition-all font-bold shadow-2xl border border-cyan-400/20">
                   <span>Explore Projects</span>
@@ -196,8 +199,8 @@ const InvestorDashboard = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-700/30">
-                      {(dashboard?.recent_transactions || []).length > 0 ? (
-                        dashboard.recent_transactions.map((tx, idx) => (
+                      {recentTransactions.length > 0 ? (
+                        recentTransactions.map((tx, idx) => (
                           <motion.tr
                             key={tx.id}
                             initial={{ opacity: 0, x: -20 }}
@@ -220,7 +223,7 @@ const InvestorDashboard = () => {
                               <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
                                 <DollarSign className="h-4 w-4 text-emerald-400" />
                                 <span className="font-black text-emerald-400 text-lg">
-                                  {parseFloat(tx.amount).toLocaleString()}
+                                  {parseFloat(tx.total_amount || tx.amount || 0).toLocaleString()}
                                 </span>
                               </div>
                             </td>

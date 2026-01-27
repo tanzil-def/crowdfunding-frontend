@@ -46,6 +46,11 @@ const investorService = {
         return data.data || data;
     },
 
+    getInvestmentDetail: async (id) => {
+        const { data } = await axiosInstance.get(`/api/v1/investments/${id}/`);
+        return data.data || data;
+    },
+
     // Favorites
     addToFavorites: async (projectId) => {
         const { data } = await axiosInstance.post('/api/v1/favorites/', { project: projectId });

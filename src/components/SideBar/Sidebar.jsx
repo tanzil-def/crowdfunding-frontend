@@ -12,7 +12,11 @@ import {
   FileText,
   Shield,
   Users,
-  Lock
+  Lock,
+  Heart,
+  Wallet as WalletIcon,
+  CreditCard,
+  PieChart as PortfolioIcon
 } from "lucide-react";
 import { useSelector } from "react-redux";
 
@@ -40,7 +44,10 @@ const Sidebar = ({ role }) => {
     INVESTOR: [
       { icon: <LayoutDashboard size={20} />, label: "Dashboard", path: "/investor" },
       { icon: <Briefcase size={20} />, label: "Marketplace", path: "/investor/browse" },
-      { icon: <DollarSign size={20} />, label: "My Investments", path: "/investor/my-investments" },
+      { icon: <PortfolioIcon size={20} />, label: "Portfolio", path: "/investor/portfolio" },
+      { icon: <DollarSign size={20} />, label: "My Investments", path: "/investor/investments" },
+      { icon: <WalletIcon size={20} />, label: "Wallet", path: "/investor/wallet" },
+      { icon: <Heart size={20} />, label: "Favorites", path: "/investor/favorites" },
       { icon: <Briefcase size={20} />, label: "Compare Projects", path: "/investor/compare" },
       { icon: <Lock size={20} />, label: "Access Requests", path: "/investor/requests" },
       { icon: <Settings size={20} />, label: "Account", path: "/account" },
@@ -52,7 +59,8 @@ const Sidebar = ({ role }) => {
       { icon: <FileText size={20} />, label: "Pending Projects", path: "/admin/pending-projects" },
       { icon: <Users size={20} />, label: "User Management", path: "/admin/users" },
       { icon: <Shield size={20} />, label: "Audit Logs", path: "/admin/audit-logs" },
-      { icon: <Shield size={20} />, label: "Access Requests", path: "/admin/access-requests" },
+      { icon: <Lock size={20} />, label: "Access Requests", path: "/admin/access-requests" },
+      { icon: <CreditCard size={20} />, label: "Payments", path: "/admin/payments" },
       { icon: <Settings size={20} />, label: "Account", path: "/account" },
     ],
   };

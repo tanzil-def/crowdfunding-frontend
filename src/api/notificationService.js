@@ -5,7 +5,7 @@ import axiosInstance from './axiosInstance';
  */
 export const fetchNotifications = async () => {
     try {
-        const response = await axiosInstance.get('/notifications/');
+        const response = await axiosInstance.get('/api/v1/notifications/');
         return response.data;
     } catch (error) {
         console.error('Failed to fetch notifications:', error);
@@ -18,7 +18,7 @@ export const fetchNotifications = async () => {
  */
 export const markNotificationAsRead = async (notificationId) => {
     try {
-        const response = await axiosInstance.patch(`/notifications/${notificationId}/read/`);
+        const response = await axiosInstance.patch(`/api/v1/notifications/${notificationId}/read/`);
         return response.data;
     } catch (error) {
         console.error('Failed to mark notification as read:', error);
@@ -31,16 +31,8 @@ export const markNotificationAsRead = async (notificationId) => {
  */
 export const markAllNotificationsAsRead = async () => {
     try {
-        // Fetch all unread notifications first
-        const response = await axiosInstance.get('/notifications/');
-        const notifications = response.data.results || response.data;
-
-        // Mark each unread notification as read
-        const unreadNotifications = notifications.filter(n => !n.is_read);
-        const promises = unreadNotifications.map(n => markNotificationAsRead(n.id));
-
-        await Promise.all(promises);
-        return { success: true };
+        const response = await axiosInstance.post('/api/v1/notifications/mark-all-read/');
+        return response.data;
     } catch (error) {
         console.error('Failed to mark all notifications as read:', error);
         throw error;
@@ -49,13 +41,14 @@ export const markAllNotificationsAsRead = async () => {
 
 const notificationService = {
     // Primary methods
-    fetchNotifications,    // Matches request
-    getNotifications: fetchNotifications, // Alias for backward compatibility
+    fetchNotifications,
+    getNotifications: fetchNotifications,
 
-    markNotificationAsRead, // Matches request
-    markNotificationRead: markNotificationAsRead, // Alias for backward compatibility
+    markNotificationAsRead,
+    markNotificationRead: markNotificationAsRead,
 
     markAllNotificationsAsRead,
+    markAllRead: markAllNotificationsAsRead,
 };
 
 export default notificationService;

@@ -9,7 +9,8 @@ import {
   Plus,
   ArrowRight,
   Sparkles,
-  Zap
+  Zap,
+  Users
 } from 'lucide-react';
 import developerService from '../../api/developerService';
 
@@ -319,6 +320,7 @@ const DeveloperDashboard = () => {
                       <th className="p-6 text-left">Project Name</th>
                       <th className="p-6 text-left">Status</th>
                       <th className="p-6 text-left">Equity Progress</th>
+                      <th className="p-6 text-left">Investors</th>
                       <th className="p-6 text-right">Capital Raised</th>
                     </tr>
                   </thead>
@@ -360,6 +362,16 @@ const DeveloperDashboard = () => {
                               </div>
                               <span className="text-sm font-bold text-slate-300 min-w-[50px] text-right">
                                 {Math.round(progress)}%
+                              </span>
+                            </div>
+                          </td>
+
+                          {/* Investor Count */}
+                          <td className="p-6">
+                            <div className="flex items-center gap-2">
+                              <Users className="h-4 w-4 text-slate-500" />
+                              <span className="font-bold text-white">
+                                {project.investor_count || 0}
                               </span>
                             </div>
                           </td>

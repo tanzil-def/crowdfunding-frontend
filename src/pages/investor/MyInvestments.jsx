@@ -13,13 +13,13 @@ import {
   Clock,
   XCircle,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 
 const MyInvestments = () => {
+  const navigate = useNavigate();
   const [investments, setInvestments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedInvestment, setSelectedInvestment] = useState(null);
-  const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -40,14 +40,8 @@ const MyInvestments = () => {
     }
   };
 
-  const viewReceipt = async (investment) => {
-    try {
-      const detail = await investorService.getInvestmentDetail(investment.id);
-      setSelectedInvestment(detail);
-      setShowReceiptModal(true);
-    } catch (err) {
-      toast.error("Failed to load receipt");
-    }
+  const viewReceipt = (investmentId) => {
+    navigate(`/investor/investments/${investmentId}`);
   };
 
   const getPaymentStatusBadge = (status) => {
@@ -184,7 +178,7 @@ const MyInvestments = () => {
                   {/* Action Buttons */}
                   <div className="flex flex-col gap-3 lg:w-48">
                     <button
-                      onClick={() => viewReceipt(investment)}
+                      onClick={() => viewReceipt(investment.id)}
                       className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all shadow-lg hover:shadow-blue-500/50"
                     >
                       <Eye className="w-5 h-5" />
@@ -220,130 +214,6 @@ const MyInvestments = () => {
           </div>
         )}
       </div>
-
-      {/* Receipt Modal */}
-      <AnimatePresence>
-        {showReceiptModal && selectedInvestment && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-            onClick={() => setShowReceiptModal(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-slate-800 border border-slate-700 rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-            >
-              {/* Receipt Header */}
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-2xl font-bold text-white">Investment Receipt</h2>
-                  <p className="text-gray-400 text-sm">
-                    Transaction ID: {selectedInvestment.id}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowReceiptModal(false)}
-                  className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
-                >
-                  <X className="w-5 h-5 text-gray-400" />
-                </button>
-              </div>
-
-              {/* Receipt Content */}
-              <div className="space-y-6">
-                {/* Project Details */}
-                <div className="bg-slate-700/30 rounded-xl p-6">
-                  <h3 className="text-white font-bold mb-4">Project Details</h3>
-                  <div className="space-y-3 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Project Name</span>
-                      <span className="text-white font-semibold">
-                        {selectedInvestment.project_title}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Project Status</span>
-                      <span className="text-white">{selectedInvestment.project_status}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Total Project Shares</span>
-                      <span className="text-white">
-                        {selectedInvestment.project_total_shares?.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Shares Sold</span>
-                      <span className="text-white">
-                        {selectedInvestment.project_shares_sold?.toLocaleString()}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Investment Details */}
-                <div className="bg-slate-700/30 rounded-xl p-6">
-                  <h3 className="text-white font-bold mb-4">Your Investment</h3>
-                  <div className="space-y-3 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Shares Purchased</span>
-                      <span className="text-white font-semibold">
-                        {selectedInvestment.shares_purchased}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Price per Share</span>
-                      <span className="text-white">
-                        ${parseFloat(selectedInvestment.price_per_share).toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="border-t border-slate-600 pt-3 flex justify-between">
-                      <span className="text-gray-400 font-semibold">Total Amount</span>
-                      <span className="text-2xl font-bold text-blue-400">
-                        ${parseFloat(selectedInvestment.total_amount).toLocaleString()}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Transaction Details */}
-                <div className="bg-slate-700/30 rounded-xl p-6">
-                  <h3 className="text-white font-bold mb-4">Transaction Details</h3>
-                  <div className="space-y-3 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Date & Time</span>
-                      <span className="text-white">
-                        {new Date(selectedInvestment.created_at).toLocaleString()}
-                      </span>
-                    </div>
-                    {selectedInvestment.payment_details && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Payment Details</span>
-                        <span className="text-white font-mono text-xs">
-                          {selectedInvestment.payment_details}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Download Button */}
-                <button
-                  onClick={() => toast.success("Receipt download feature coming soon")}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all"
-                >
-                  <Download className="w-5 h-5" />
-                  Download Receipt (PDF)
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

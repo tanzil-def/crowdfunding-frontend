@@ -32,7 +32,7 @@ import ProjectDetail from "../pages/investor/ProjectDetail";
 import InvestPage from "../pages/investor/InvestPage";
 import Portfolio from "../pages/investor/Portfolio";
 import MyInvestments from "../pages/investor/MyInvestments";
-import Investments from "../pages/investor/Investments";
+import InvestmentDetail from "../pages/investor/InvestmentDetail";
 import Wallet from "../pages/investor/Wallet";
 import Favorites from "../pages/investor/Favorites";
 import CompareProjects from "../pages/investor/CompareProjects";
@@ -116,8 +116,8 @@ const router = createBrowserRouter([
       { path: "projects/:id/invest", element: <InvestPage /> },
       { path: "projects/:id/buynow", element: <BuyNow /> },
       { path: "portfolio", element: <Portfolio /> },
-      { path: "my-investments", element: <MyInvestments /> },
-      { path: "investments", element: <Investments /> },
+      { path: "investments", element: <MyInvestments /> },
+      { path: "investments/:id", element: <InvestmentDetail /> },
       { path: "wallet", element: <Wallet /> },
       { path: "favorites", element: <Favorites /> },
       { path: "compare", element: <CompareProjects /> },

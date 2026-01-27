@@ -19,7 +19,7 @@ const adminService = {
     },
 
     approveProject: async (id) => {
-        const { data } = await axiosInstance.post(`/api/v1/projects/admin/projects/${id}/approve/`);
+        const { data } = await axiosInstance.post(`/api/v1/projects/admin/projects/${id}/approve/`, {});
         return data.data || data;
     },
 
@@ -35,22 +35,22 @@ const adminService = {
 
     // Access Requests (Admin Only)
     getAccessRequests: async (params = {}) => {
-        const { data } = await axiosInstance.get('/api/v1/access-requests/admin/list/', { params });
+        const { data } = await axiosInstance.get('/api/v1/access-requests/admin/', { params });
         return data.data || data;
     },
 
     approveAccessRequest: async (id) => {
-        const { data } = await axiosInstance.post(`/api/v1/access-requests/admin/${id}/approve/`);
+        const { data } = await axiosInstance.post(`/api/v1/access-requests/admin/${id}/approve/`, {});
         return data.data || data;
     },
 
     rejectAccessRequest: async (id, reason) => {
-        const { data } = await axiosInstance.post(`/api/v1/access-requests/admin/${id}/reject/`, { reason });
+        const { data } = await axiosInstance.post(`/api/v1/access-requests/admin/${id}/reject/`, { admin_note: reason });
         return data.data || data;
     },
 
     revokeAccessRequest: async (id, reason) => {
-        const { data } = await axiosInstance.post(`/api/v1/access-requests/admin/${id}/revoke/`, { reason });
+        const { data } = await axiosInstance.post(`/api/v1/access-requests/admin/${id}/revoke/`, { admin_note: reason });
         return data.data || data;
     },
 
@@ -73,13 +73,38 @@ const adminService = {
     },
 
     getTransactionDetail: async (id) => {
-        const { data } = await axiosInstance.get(`/api/v1/investments/admin/transactions/${id}/detail/`);
+        const { data } = await axiosInstance.get(`/api/v1/investments/admin/transactions/${id}/`);
         return data.data || data;
     },
 
     // User Management
     getUsers: async (params = {}) => {
-        const { data } = await axiosInstance.get('/api/v1/auth/admin/users/', { params });
+        const { data } = await axiosInstance.get('/api/v1/admin/users/', { params });
+        return data.data || data;
+    },
+
+    getStatistics: async () => {
+        const { data } = await axiosInstance.get('/api/v1/projects/admin/projects/statistics/');
+        return data.data || data;
+    },
+
+    getUserDetail: async (id) => {
+        const { data } = await axiosInstance.get(`/api/v1/admin/users/${id}/`);
+        return data.data || data;
+    },
+
+    updateUser: async (id, userData) => {
+        const { data } = await axiosInstance.patch(`/api/v1/admin/users/${id}/`, userData);
+        return data.data || data;
+    },
+
+    deactivateUser: async (id) => {
+        const { data } = await axiosInstance.post(`/api/v1/admin/users/${id}/deactivate/`);
+        return data.data || data;
+    },
+
+    manuallyVerifyEmail: async (id) => {
+        const { data } = await axiosInstance.post(`/api/v1/admin/users/${id}/verify-email/`);
         return data.data || data;
     },
 };

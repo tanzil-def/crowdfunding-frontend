@@ -11,6 +11,7 @@ import {
   MessageSquare,
   X,
   AlertCircle,
+  Search,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 
@@ -24,10 +25,15 @@ const AccessRequestsQueue = () => {
   const [filter, setFilter] = useState("PENDING");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    fetchAccessRequests();
-  }, [page, filter]);
+    const delayDebounceFn = setTimeout(() => {
+      fetchAccessRequests();
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [page, filter, searchTerm]);
 
   const fetchAccessRequests = async () => {
     try {
@@ -35,6 +41,9 @@ const AccessRequestsQueue = () => {
       const params = { page, page_size: 10 };
       if (filter !== "ALL") {
         params.status = filter;
+      }
+      if (searchTerm.trim()) {
+        params.search = searchTerm;
       }
       const data = await adminService.getAccessRequests(params);
       setRequests(data.results || []);
@@ -159,27 +168,43 @@ const AccessRequestsQueue = () => {
           </p>
         </motion.div>
 
-        {/* Filters */}
+        {/* Filters and Search */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6 flex gap-3 overflow-x-auto pb-2"
+          className="mb-8 flex flex-col md:flex-row gap-6 items-start md:items-center justify-between"
         >
-          {["ALL", "PENDING", "APPROVED", "REJECTED", "REVOKED"].map((status) => (
-            <button
-              key={status}
-              onClick={() => {
-                setFilter(status);
+          <div className="flex gap-3 overflow-x-auto pb-2 w-full md:w-auto">
+            {["ALL", "PENDING", "APPROVED", "REJECTED", "REVOKED"].map((status) => (
+              <button
+                key={status}
+                onClick={() => {
+                  setFilter(status);
+                  setPage(1);
+                }}
+                className={`px-6 py-3 rounded-xl font-semibold transition-all whitespace-nowrap ${filter === status
+                  ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/50"
+                  : "bg-slate-700/50 text-gray-300 hover:bg-slate-700"
+                  }`}
+              >
+                {status}
+              </button>
+            ))}
+          </div>
+
+          <div className="relative w-full md:w-80">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Search project or investor..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
                 setPage(1);
               }}
-              className={`px-6 py-3 rounded-xl font-semibold transition-all whitespace-nowrap ${filter === status
-                ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/50"
-                : "bg-slate-700/50 text-gray-300 hover:bg-slate-700"
-                }`}
-            >
-              {status}
-            </button>
-          ))}
+              className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl py-3 pl-12 pr-4 text-white focus:border-cyan-500 outline-none transition-all placeholder:text-gray-500"
+            />
+          </div>
         </motion.div>
 
         {/* Requests List */}

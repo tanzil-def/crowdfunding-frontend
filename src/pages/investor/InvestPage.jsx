@@ -67,15 +67,18 @@ const InvestPage = () => {
         idempotency_key: idempotencyKey,
       });
 
-      // In production, this would redirect to payment gateway
-      // For sandbox, we'll simulate the process
       toast.success("Investment initiated! Redirecting to payment...");
 
-      // Simulate payment redirect
-      setTimeout(() => {
-        toast.success("Payment successful! Investment recorded.");
-        navigate("/investor/investments");
-      }, 2000);
+      // Use the payment URL from response to redirect to external gateway
+      if (response.payment_url) {
+        window.location.href = response.payment_url;
+      } else {
+        // Fallback for testing if no URL returned
+        setTimeout(() => {
+          toast.success("Payment recorded.");
+          navigate("/investor/my-investments");
+        }, 1500);
+      }
 
     } catch (err) {
       toast.error(err.response?.data?.detail || "Failed to initiate investment");

@@ -243,6 +243,10 @@ const AdminDashboard = () => {
                     <span className="text-slate-300 font-bold group-hover:text-white">User Management</span>
                     <ArrowRight className="w-4 h-4 text-slate-500 group-hover:translate-x-1 transition-transform group-hover:text-indigo-400" />
                   </Link>
+                  <Link to="/admin/payments" className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl hover:bg-slate-700/50 transition-all border border-slate-700 group hover:shadow-lg hover:border-indigo-500/30">
+                    <span className="text-slate-300 font-bold group-hover:text-white">Payment Transactions</span>
+                    <ArrowRight className="w-4 h-4 text-slate-500 group-hover:translate-x-1 transition-transform group-hover:text-indigo-400" />
+                  </Link>
                 </div>
               </div>
             </motion.div>
