@@ -8,6 +8,7 @@ import adminService from "../../api/adminService";
 import developerService from "../../api/developerService";
 import { setPendingProjectsCount } from "../../store/slices/adminSlice";
 import { setNotifications } from "../../store/slices/notificationSlice";
+import { useNotificationWebSocket } from "../../hooks/useNotificationWebSocket";
 import { useEffect, useRef } from "react";
 import { toast } from "react-hot-toast";
 
@@ -16,6 +17,9 @@ const MasterLayout = ({ role: requiredRole }) => {
   const { pendingProjectsCount } = useSelector((state) => state.admin || { pendingProjectsCount: 0 });
   const dispatch = useDispatch();
   const previousCountRef = useRef(pendingProjectsCount);
+
+  // ✅ Initialize WebSocket for real-time notifications
+  useNotificationWebSocket(user);
 
   useEffect(() => {
     if (isAuthenticated && user?.role === "ADMIN") {
@@ -52,41 +56,18 @@ const MasterLayout = ({ role: requiredRole }) => {
     }
   }, [isAuthenticated, user?.role, dispatch]);
 
-  // Notification Polling for all authenticated users
-  const { unreadCount } = useSelector((state) => state.notifications || { unreadCount: 0 });
-  const previousUnreadRef = useRef(unreadCount);
-
+  // Fetch initial notifications once on mount
   useEffect(() => {
     if (isAuthenticated) {
-      const fetchNotifications = async () => {
+      const loadInitial = async () => {
         try {
           const data = await developerService.getNotifications();
-          const notificationsList = data.results || [];
-          dispatch(setNotifications(notificationsList));
-
-          // Show toast for new notifications
-          const currentUnread = notificationsList.filter(n => !n.is_read).length;
-          if (currentUnread > previousUnreadRef.current) {
-            const newLatest = notificationsList.find(n => !n.is_read);
-            if (newLatest) {
-              toast.success(newLatest.message, {
-                icon: '🔔',
-                duration: 5000,
-              });
-            }
-          }
-          previousUnreadRef.current = currentUnread;
+          dispatch(setNotifications(data.results || data));
         } catch (err) {
-          // Silently skip if endpoint is unavailable or unauthorized during refresh
-          if (err.response?.status !== 404 && err.response?.status !== 401) {
-            console.debug("Notification sync temporarily unavailable.");
-          }
+          console.debug("Initial notification sync deferred.");
         }
       };
-
-      fetchNotifications();
-      const interval = setInterval(fetchNotifications, 60000); // Poll every 60 seconds
-      return () => clearInterval(interval);
+      loadInitial();
     }
   }, [isAuthenticated, dispatch]);
 

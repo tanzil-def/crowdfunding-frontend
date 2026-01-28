@@ -1,13 +1,11 @@
 import React, { useState } from "react";
 import { Bell, LogOut, Search } from "lucide-react";
-import NotificationCenter from "../Notifications/NotificationCenter";
-import { useSelector, useDispatch } from "react-redux";
+import NotificationBell from "./NotificationBell";
+import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../../store/slices/userSlice";
 import authService from "../../api/authService";
 
 const PrivateHeader = () => {
-  const [showNotifications, setShowNotifications] = useState(false);
-  const { unreadCount } = useSelector((state) => state.notifications || { unreadCount: 0 });
   const dispatch = useDispatch();
 
   const handleLogout = async () => {
@@ -28,23 +26,7 @@ const PrivateHeader = () => {
       </div>
 
       <div className="flex items-center gap-4 relative">
-        <button
-          onClick={() => setShowNotifications(!showNotifications)}
-          className={`p-2.5 bg-slate-900 border rounded-xl transition-all relative ${showNotifications ? 'border-emerald-500 text-emerald-400' : 'border-slate-800 text-slate-400 hover:text-white'
-            }`}
-        >
-          <Bell size={20} />
-          {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white border-2 border-[#020617] animate-pulse">
-              {unreadCount}
-            </span>
-          )}
-        </button>
-
-        <NotificationCenter
-          isOpen={showNotifications}
-          onClose={() => setShowNotifications(false)}
-        />
+        <NotificationBell />
 
         <button
           onClick={handleLogout}

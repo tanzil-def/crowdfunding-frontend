@@ -21,13 +21,7 @@ const AccessRequestsQueue = () => {
     search: '',
   });
 
-  // Action Modal State
-  const [actionModal, setActionModal] = useState({
-    isOpen: false,
-    type: null, // 'REJECT' or 'REVOKE'
-    requestId: null,
-    reason: ''
-  });
+
 
   const fetchRequests = async () => {
     try {
@@ -60,7 +54,6 @@ const AccessRequestsQueue = () => {
   };
 
   const handleApprove = async (id) => {
-    if (!window.confirm('Are you sure you want to approve this request?')) return;
     try {
       await adminService.approveAccessRequest(id);
       toast.success('Request approved successfully');
@@ -71,34 +64,18 @@ const AccessRequestsQueue = () => {
     }
   };
 
-  const openActionModal = (type, id) => {
-    setActionModal({
-      isOpen: true,
-      type,
-      requestId: id,
-      reason: ''
-    });
-  };
-
-  const handleActionSubmit = async (e) => {
-    e.preventDefault();
-    const { type, requestId, reason } = actionModal;
-
+  const handleReject = async (id) => {
     try {
-      if (type === 'REJECT') {
-        await adminService.rejectAccessRequest(requestId, reason);
-        toast.success('Request rejected');
-      } else if (type === 'REVOKE') {
-        await adminService.revokeAccessRequest(requestId, reason);
-        toast.success('Access revoked');
-      }
-      setActionModal({ isOpen: false, type: null, requestId: null, reason: '' });
+      await adminService.rejectAccessRequest(id, "Rejected by admin action");
+      toast.success('Request rejected');
       fetchRequests();
     } catch (error) {
-      console.error(`${type} failed:`, error);
-      toast.error(`Failed to ${type.toLowerCase()} request`);
+      console.error('Rejection failed:', error);
+      toast.error('Failed to reject request');
     }
   };
+
+
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -123,8 +100,8 @@ const AccessRequestsQueue = () => {
             key={status}
             onClick={() => handleStatusChange(status)}
             className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${filters.status === status
-                ? 'bg-blue-50 text-blue-600 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              ? 'bg-blue-50 text-blue-600 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
               }`}
           >
             {status.charAt(0) + status.slice(1).toLowerCase()}
@@ -169,25 +146,20 @@ const AccessRequestsQueue = () => {
                           <>
                             <button
                               onClick={() => handleApprove(req.id)}
-                              className="text-green-600 hover:text-green-800 text-sm font-medium hover:underline"
+                              className="px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-xs font-bold rounded shadow-sm transition-colors"
                             >
                               Approve
                             </button>
                             <button
-                              onClick={() => openActionModal('REJECT', req.id)}
-                              className="text-red-600 hover:text-red-800 text-sm font-medium hover:underline"
+                              onClick={() => handleReject(req.id)}
+                              className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-xs font-bold rounded shadow-sm transition-colors"
                             >
                               Reject
                             </button>
                           </>
                         )}
                         {req.status === 'APPROVED' && (
-                          <button
-                            onClick={() => openActionModal('REVOKE', req.id)}
-                            className="text-orange-600 hover:text-orange-800 text-sm font-medium hover:underline flex items-center gap-1"
-                          >
-                            <RotateCcw className="w-3 h-3" /> Revoke
-                          </button>
+                          <div className="text-xs text-gray-400 italic">No actions</div>
                         )}
                       </div>
                     </td>
@@ -218,51 +190,7 @@ const AccessRequestsQueue = () => {
         </div>
       </div>
 
-      {/* Action Modal */}
-      {actionModal.isOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 bg-gray-500 opacity-75" onClick={() => setActionModal({ ...actionModal, isOpen: false })}></div>
-            <span className="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
-            <div className="inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-              <form onSubmit={handleActionSubmit}>
-                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    {actionModal.type === 'REJECT' ? 'Reject Request' : 'Revoke Access'}
-                  </h3>
-                  <p className="text-sm text-gray-500 mb-4">
-                    Please provide a reason for this action.
-                  </p>
-                  <textarea
-                    className="w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"
-                    rows="3"
-                    required
-                    placeholder="Reason..."
-                    value={actionModal.reason}
-                    onChange={(e) => setActionModal({ ...actionModal, reason: e.target.value })}
-                  />
-                </div>
-                <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                  <button
-                    type="submit"
-                    className={`w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none sm:ml-3 sm:w-auto sm:text-sm
-                                            ${actionModal.type === 'REJECT' ? 'bg-red-600 hover:bg-red-700' : 'bg-orange-600 hover:bg-orange-700'}`}
-                  >
-                    Confirm
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActionModal({ ...actionModal, isOpen: false })}
-                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 };

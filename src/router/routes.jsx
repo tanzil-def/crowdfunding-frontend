@@ -2,6 +2,9 @@ import React from "react";
 import { createBrowserRouter, Outlet } from "react-router-dom";
 import MasterLayout from "../pages/MasterLayout/MasterLayout";
 import PublicHeader from "../components/Header/PublicHeader";
+import { useSelector } from "react-redux";
+import { useNotificationWebSocket } from "../hooks/useNotificationWebSocket";
+import { Toaster } from "react-hot-toast";
 
 // ==========================
 // PUBLIC PAGES
@@ -63,15 +66,34 @@ import Footer from "../components/Footer/Footer";
 // ==========================
 // PUBLIC LAYOUT
 // ==========================
-const PublicLayout = () => (
-  <div className="flex flex-col min-h-screen">
-    <PublicHeader />
-    <main className="flex-1">
-      <Outlet />
-    </main>
-    <Footer />
-  </div>
-);
+const PublicLayout = () => {
+  const { user, isAuthenticated } = useSelector((state) => state.user);
+
+  // ✅ Initialize WebSocket for real-time notifications even on public pages
+  useNotificationWebSocket(isAuthenticated ? user : null);
+
+  return (
+    <div className="flex flex-col min-h-screen">
+      <PublicHeader />
+      <main className="flex-1">
+        <Outlet />
+      </main>
+      <Footer />
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#1e293b',
+            color: '#fff',
+            border: '1px solid #334155',
+            borderRadius: '12px',
+          },
+        }}
+      />
+    </div>
+  );
+};
 
 // ==========================
 // ROUTER

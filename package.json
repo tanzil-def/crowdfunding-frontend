@@ -13,6 +13,7 @@
     "@reduxjs/toolkit": "^1.9.5",
     "axios": "^1.13.2",
     "core-js-pure": "^3.30.2",
+    "date-fns": "^4.1.0",
     "framer-motion": "^10.18.0",
     "lucide-react": "^0.562.0",
     "rc-progress": "^3.4.1",
@@ -24,6 +25,8 @@
     "react-redux": "^8.0.5",
     "react-router-dom": "^6.30.3",
     "recharts": "^3.6.0",
+    "sweetalert2": "^11.26.17",
+    "sweetalert2-react-content": "^5.1.1",
     "swiper": "^9.3.2"
   },
   "devDependencies": {

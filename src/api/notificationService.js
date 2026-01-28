@@ -1,54 +1,40 @@
 import axiosInstance from './axiosInstance';
 
-/**
- * Fetch all notifications for the current user
- */
-export const fetchNotifications = async () => {
-    try {
-        const response = await axiosInstance.get('/api/v1/notifications/');
-        return response.data;
-    } catch (error) {
-        console.error('Failed to fetch notifications:', error);
-        throw error;
-    }
-};
-
-/**
- * Mark a specific notification as read
- */
-export const markNotificationAsRead = async (notificationId) => {
-    try {
-        const response = await axiosInstance.patch(`/api/v1/notifications/${notificationId}/read/`);
-        return response.data;
-    } catch (error) {
-        console.error('Failed to mark notification as read:', error);
-        throw error;
-    }
-};
-
-/**
- * Mark all notifications as read (bulk operation)
- */
-export const markAllNotificationsAsRead = async () => {
-    try {
-        const response = await axiosInstance.post('/api/v1/notifications/mark-all-read/');
-        return response.data;
-    } catch (error) {
-        console.error('Failed to mark all notifications as read:', error);
-        throw error;
-    }
-};
-
 const notificationService = {
-    // Primary methods
-    fetchNotifications,
-    getNotifications: fetchNotifications,
+    fetchAll: async (params = {}) => {
+        const { data } = await axiosInstance.get('/api/v1/notifications/', { params });
+        return data;
+    },
 
-    markNotificationAsRead,
-    markNotificationRead: markNotificationAsRead,
+    fetchNotifications: async (params = {}) => {
+        const { data } = await axiosInstance.get('/api/v1/notifications/', { params });
+        return data;
+    },
 
-    markAllNotificationsAsRead,
-    markAllRead: markAllNotificationsAsRead,
+    markAsRead: async (id) => {
+        const { data } = await axiosInstance.patch(`/api/v1/notifications/${id}/read/`);
+        return data;
+    },
+
+    markAllRead: async () => {
+        const { data } = await axiosInstance.post('/api/v1/notifications/mark-all-read/');
+        return data;
+    },
+
+    getUnreadCount: async () => {
+        const { data } = await axiosInstance.get('/api/v1/notifications/unread-count/');
+        return data;
+    },
+
+    getPreferences: async () => {
+        const { data } = await axiosInstance.get('/api/v1/notifications/preferences/');
+        return data;
+    },
+
+    updatePreferences: async (preferences) => {
+        const { data } = await axiosInstance.patch('/api/v1/notifications/preferences/', preferences);
+        return data;
+    },
 };
 
 export default notificationService;

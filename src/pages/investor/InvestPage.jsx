@@ -1,6 +1,7 @@
 // pages/investor/InvestPage.jsx
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import investorService from "../../api/investorService";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -26,6 +27,7 @@ import { toast } from "react-hot-toast";
 const InvestPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useSelector((state) => state.user);
 
   // States
   const [project, setProject] = useState(null);
@@ -101,7 +103,7 @@ const InvestPage = () => {
 
     setTimeout(async () => {
       await handleGatewayCallback(initData);
-    }, 12500);
+    }, 15000); // 15 seconds transition as requested
   };
 
   const handleGatewayCallback = async (initData) => {
@@ -109,10 +111,13 @@ const InvestPage = () => {
       const callbackPayload = {
         payment_reference_id: initData.reference_id,
         success: true,
+        // MUST be a JSON object, not a string. API expects strict JSON object structure.
         gateway_payload: {
           shares_requested: shares,
           plan_type: planType,
           project_id: id,
+          investor_id: user?.id || user?.user_id, // Ensure we have the investor ID
+          txn_id: `tve-${Math.random().toString(36).substr(2, 9)}`, // Required by serializer
           transaction_id: `TX-${Math.random().toString(36).toUpperCase().slice(2, 12)}`,
           amount: totalAmount,
           currency: "USD",
