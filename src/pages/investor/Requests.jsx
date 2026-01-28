@@ -10,6 +10,8 @@ import {
   AlertCircle,
   MessageSquare,
   Calendar,
+  Plus,
+  X,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { Link } from "react-router-dom";
@@ -18,6 +20,10 @@ const AccessRequests = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("ALL");
+  const [showModal, setShowModal] = useState(false);
+  const [projects, setProjects] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [newRequest, setNewRequest] = useState({ project: "", reason: "" });
 
   useEffect(() => {
     fetchRequests();
@@ -36,6 +42,36 @@ const AccessRequests = () => {
       toast.error("Failed to load access requests");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchProjects = async () => {
+    try {
+      const data = await investorService.getBrowseProjects();
+      setProjects(data.results || []);
+    } catch (err) {
+      console.error("Failed to fetch projects", err);
+    }
+  };
+
+  const handleCreateRequest = async (e) => {
+    e.preventDefault();
+    if (!newRequest.project || !newRequest.reason) {
+      toast.error("Please select a project and provide a reason");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await investorService.createAccessRequest(newRequest);
+      toast.success("Access Request submitted successfully");
+      setShowModal(false);
+      setNewRequest({ project: "", reason: "" });
+      fetchRequests();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to submit request");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -103,14 +139,26 @@ const AccessRequests = () => {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4"
         >
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-orange-400 to-amber-400 bg-clip-text text-transparent mb-2">
-            My Access Requests
-          </h1>
-          <p className="text-gray-400 text-lg">
-            Track your requests for restricted project information
-          </p>
+          <div>
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-orange-400 to-amber-400 bg-clip-text text-transparent mb-2">
+              My Access Requests
+            </h1>
+            <p className="text-gray-400 text-lg">
+              Track your requests for restricted project information
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              setShowModal(true);
+              fetchProjects();
+            }}
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-bold shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 transition-all transform hover:-translate-y-1"
+          >
+            <Plus className="w-5 h-5" />
+            New Request
+          </button>
         </motion.div>
 
         {/* Filters */}
@@ -266,6 +314,78 @@ const AccessRequests = () => {
           </div>
         )}
       </div>
+
+      {/* New Request Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl"
+          >
+            <div className="p-6 border-b border-slate-800 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-white">New Access Request</h2>
+              <button
+                onClick={() => setShowModal(false)}
+                className="p-2 text-slate-400 hover:text-white transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateRequest} className="p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-2">
+                  Select Project
+                </label>
+                <select
+                  value={newRequest.project}
+                  onChange={(e) => setNewRequest({ ...newRequest, project: e.target.value })}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-orange-500 outline-none transition-all"
+                  required
+                >
+                  <option value="">Choose a project...</option>
+                  {projects.map((project) => (
+                    <option key={project.id} value={project.id}>
+                      {project.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-2">
+                  Reason for Request
+                </label>
+                <textarea
+                  value={newRequest.reason}
+                  onChange={(e) => setNewRequest({ ...newRequest, reason: e.target.value })}
+                  placeholder="Explain why you need access to this project's restricted information..."
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-orange-500 outline-none transition-all h-32 resize-none"
+                  required
+                />
+              </div>
+
+              <div className="flex gap-4">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="flex-1 px-6 py-3 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-700 transition-all border border-slate-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-bold shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {submitting ? "Submitting..." : "Submit Request"}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };
