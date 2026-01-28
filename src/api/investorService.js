@@ -41,6 +41,11 @@ const investorService = {
         return data.data || data;
     },
 
+    submitPaymentCallback: async (callbackData) => {
+        const { data } = await axiosInstance.post('/api/v1/investments/payments/callback/', callbackData);
+        return data.data || data;
+    },
+
     getMyInvestments: async (params = {}) => {
         const { data } = await axiosInstance.get('/api/v1/investments/my/', { params });
         return data.data || data;

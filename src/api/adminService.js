@@ -77,6 +77,16 @@ const adminService = {
         return data.data || data;
     },
 
+    approveInvestment: async (id) => {
+        const { data } = await axiosInstance.post(`/api/v1/investments/admin/transactions/${id}/approve/`, {});
+        return data.data || data;
+    },
+
+    rejectInvestment: async (id, reason) => {
+        const { data } = await axiosInstance.post(`/api/v1/investments/admin/transactions/${id}/reject/`, { reason });
+        return data.data || data;
+    },
+
     // User Management
     getUsers: async (params = {}) => {
         const { data } = await axiosInstance.get('/api/v1/admin/users/', { params });
