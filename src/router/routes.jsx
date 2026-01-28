@@ -46,7 +46,7 @@ import PendingProjects from "../pages/admin/PendingProjects";
 import AccessRequestsQueue from "../pages/admin/AccessRequestsQueue";
 import Users from "../pages/admin/Users";
 import Payments from "../pages/admin/Payments";
-import AuditLogs from "../pages/admin/Auditlogs";
+import AuditLogs from "../pages/admin/AuditLogs";
 
 // ==========================
 // COMMON PAGES

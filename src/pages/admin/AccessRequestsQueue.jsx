@@ -1,409 +1,268 @@
-import React, { useEffect, useState } from "react";
-import adminService from "../../api/adminService";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useEffect } from 'react';
+import adminService from '../../api/adminService';
+import { toast } from 'react-hot-toast';
 import {
   CheckCircle,
   XCircle,
-  Lock,
-  Unlock,
-  User,
-  Calendar,
-  MessageSquare,
-  X,
-  AlertCircle,
-  Search,
-} from "lucide-react";
-import { toast } from "react-hot-toast";
+  Clock,
+  AlertTriangle,
+  Eye,
+  RotateCcw
+} from 'lucide-react';
 
 const AccessRequestsQueue = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedRequest, setSelectedRequest] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState(null);
-  const [reason, setReason] = useState("");
-  const [filter, setFilter] = useState("PENDING");
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [stats, setStats] = useState({ count: 0, next: null, previous: null });
+  const [filters, setFilters] = useState({
+    page: 1,
+    page_size: 10,
+    status: 'PENDING',
+    search: '',
+  });
 
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      fetchAccessRequests();
-    }, 500);
+  // Action Modal State
+  const [actionModal, setActionModal] = useState({
+    isOpen: false,
+    type: null, // 'REJECT' or 'REVOKE'
+    requestId: null,
+    reason: ''
+  });
 
-    return () => clearTimeout(delayDebounceFn);
-  }, [page, filter, searchTerm]);
-
-  const fetchAccessRequests = async () => {
+  const fetchRequests = async () => {
     try {
       setLoading(true);
-      const params = { page, page_size: 10 };
-      if (filter !== "ALL") {
-        params.status = filter;
-      }
-      if (searchTerm.trim()) {
-        params.search = searchTerm;
-      }
-      const data = await adminService.getAccessRequests(params);
+      const data = await adminService.getAccessRequests(filters);
       setRequests(data.results || []);
-      setTotalPages(Math.ceil((data.count || 0) / 10));
-    } catch (err) {
-      console.error("AccessRequests fetch error:", err);
-      toast.error("Failed to load access requests");
+      setStats({
+        count: data.count,
+        next: data.next,
+        previous: data.previous
+      });
+    } catch (error) {
+      console.error('Error fetching requests:', error);
+      toast.error('Failed to load access requests');
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchRequests();
+  }, [filters.page, filters.status]);
+
+  const handleStatusChange = (status) => {
+    setFilters(prev => ({ ...prev, status, page: 1 }));
+  };
+
+  const handlePageChange = (newPage) => {
+    setFilters(prev => ({ ...prev, page: newPage }));
+  };
+
   const handleApprove = async (id) => {
+    if (!window.confirm('Are you sure you want to approve this request?')) return;
     try {
       await adminService.approveAccessRequest(id);
-      toast.success("Access request approved!");
-      fetchAccessRequests();
-    } catch (err) {
-      toast.error("Failed to approve request");
+      toast.success('Request approved successfully');
+      fetchRequests();
+    } catch (error) {
+      console.error('Approval failed:', error);
+      toast.error('Failed to approve request');
     }
   };
 
-  const handleReject = async () => {
-    if (!reason.trim()) {
-      toast.error("Please provide a reason for rejection");
-      return;
-    }
+  const openActionModal = (type, id) => {
+    setActionModal({
+      isOpen: true,
+      type,
+      requestId: id,
+      reason: ''
+    });
+  };
+
+  const handleActionSubmit = async (e) => {
+    e.preventDefault();
+    const { type, requestId, reason } = actionModal;
+
     try {
-      await adminService.rejectAccessRequest(selectedRequest.id, reason);
-      toast.success("Access request rejected");
-      fetchAccessRequests();
-      closeModal();
-    } catch (err) {
-      toast.error("Failed to reject request");
+      if (type === 'REJECT') {
+        await adminService.rejectAccessRequest(requestId, reason);
+        toast.success('Request rejected');
+      } else if (type === 'REVOKE') {
+        await adminService.revokeAccessRequest(requestId, reason);
+        toast.success('Access revoked');
+      }
+      setActionModal({ isOpen: false, type: null, requestId: null, reason: '' });
+      fetchRequests();
+    } catch (error) {
+      console.error(`${type} failed:`, error);
+      toast.error(`Failed to ${type.toLowerCase()} request`);
     }
   };
 
-  const handleRevoke = async () => {
-    if (!reason.trim()) {
-      toast.error("Please provide a reason for revocation");
-      return;
-    }
-    try {
-      await adminService.revokeAccessRequest(selectedRequest.id, reason);
-      toast.success("Access revoked");
-      fetchAccessRequests();
-      closeModal();
-    } catch (err) {
-      toast.error("Failed to revoke access");
-    }
-  };
-
-  const openModal = (request, type) => {
-    setSelectedRequest(request);
-    setModalType(type);
-    setShowModal(true);
-  };
-
-  const closeModal = () => {
-    setShowModal(false);
-    setSelectedRequest(null);
-    setModalType(null);
-    setReason("");
-  };
-
-  const getStatusColor = (status) => {
+  const getStatusBadge = (status) => {
     switch (status) {
-      case "PENDING":
-        return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
-      case "APPROVED":
-        return "bg-green-500/20 text-green-400 border-green-500/30";
-      case "REJECTED":
-        return "bg-red-500/20 text-red-400 border-red-500/30";
-      case "REVOKED":
-        return "bg-orange-500/20 text-orange-400 border-orange-500/30";
-      default:
-        return "bg-gray-500/20 text-gray-400 border-gray-500/30";
+      case 'APPROVED': return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1" /> Approved</span>;
+      case 'REJECTED': return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"><XCircle className="w-3 h-3 mr-1" /> Rejected</span>;
+      case 'REVOKED': return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"><AlertTriangle className="w-3 h-3 mr-1" /> Revoked</span>;
+      default: return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"><Clock className="w-3 h-3 mr-1" /> Pending</span>;
     }
   };
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case "PENDING":
-        return <AlertCircle className="w-5 h-5" />;
-      case "APPROVED":
-        return <Unlock className="w-5 h-5" />;
-      case "REJECTED":
-        return <XCircle className="w-5 h-5" />;
-      case "REVOKED":
-        return <Lock className="w-5 h-5" />;
-      default:
-        return <AlertCircle className="w-5 h-5" />;
-    }
-  };
-
-  if (loading && requests.length === 0) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-cyan-900 to-slate-900 flex items-center justify-center">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="w-16 h-16 border-4 border-cyan-500 border-t-transparent rounded-full"
-        />
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-cyan-900 to-slate-900 p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent mb-2">
-            Access Requests Management
-          </h1>
-          <p className="text-gray-400 text-lg">
-            Review and manage restricted data access requests
-          </p>
-        </motion.div>
-
-        {/* Filters and Search */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8 flex flex-col md:flex-row gap-6 items-start md:items-center justify-between"
-        >
-          <div className="flex gap-3 overflow-x-auto pb-2 w-full md:w-auto">
-            {["ALL", "PENDING", "APPROVED", "REJECTED", "REVOKED"].map((status) => (
-              <button
-                key={status}
-                onClick={() => {
-                  setFilter(status);
-                  setPage(1);
-                }}
-                className={`px-6 py-3 rounded-xl font-semibold transition-all whitespace-nowrap ${filter === status
-                  ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/50"
-                  : "bg-slate-700/50 text-gray-300 hover:bg-slate-700"
-                  }`}
-              >
-                {status}
-              </button>
-            ))}
-          </div>
-
-          <div className="relative w-full md:w-80">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Search project or investor..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setPage(1);
-              }}
-              className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl py-3 pl-12 pr-4 text-white focus:border-cyan-500 outline-none transition-all placeholder:text-gray-500"
-            />
-          </div>
-        </motion.div>
-
-        {/* Requests List */}
-        {requests.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-12 text-center"
-          >
-            <Lock className="w-20 h-20 text-cyan-400 mx-auto mb-4 opacity-50" />
-            <h2 className="text-2xl font-bold text-white mb-2">No Access Requests</h2>
-            <p className="text-gray-400">
-              No {filter.toLowerCase()} access requests at the moment.
-            </p>
-          </motion.div>
-        ) : (
-          <div className="space-y-4">
-            {requests.map((request, index) => (
-              <motion.div
-                key={request.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6 hover:border-cyan-500/50 transition-all"
-              >
-                <div className="flex flex-col lg:flex-row gap-6">
-                  {/* Request Info */}
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <h3 className="text-xl font-bold text-white mb-2">
-                          {request.project_title}
-                        </h3>
-                        <div className="flex items-center gap-4 text-sm text-gray-400 mb-3">
-                          <span className="flex items-center gap-1">
-                            <User className="w-4 h-4" />
-                            Investor: {request.investor_email || "N/A"}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            {new Date(request.created_at).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </div>
-                      <div
-                        className={`flex items-center gap-2 px-4 py-2 rounded-full border ${getStatusColor(
-                          request.status
-                        )}`}
-                      >
-                        {getStatusIcon(request.status)}
-                        <span className="font-semibold">{request.status}</span>
-                      </div>
-                    </div>
-
-                    {request.reason && (
-                      <div className="bg-slate-700/30 rounded-lg p-4 mb-4">
-                        <p className="text-gray-400 text-sm mb-1 flex items-center gap-2">
-                          <MessageSquare className="w-4 h-4" />
-                          Request Reason:
-                        </p>
-                        <p className="text-white">{request.reason}</p>
-                      </div>
-                    )}
-
-                    {request.admin_note && (
-                      <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-4">
-                        <p className="text-cyan-400 text-sm mb-1 flex items-center gap-2">
-                          <MessageSquare className="w-4 h-4" />
-                          Admin Note:
-                        </p>
-                        <p className="text-white">{request.admin_note}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Action Buttons */}
-                  {request.status === "PENDING" && (
-                    <div className="flex flex-col gap-3 lg:w-48">
-                      <button
-                        onClick={() => handleApprove(request.id)}
-                        className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-semibold hover:from-green-600 hover:to-emerald-600 transition-all shadow-lg hover:shadow-green-500/50"
-                      >
-                        <CheckCircle className="w-5 h-5" />
-                        Approve
-                      </button>
-                      <button
-                        onClick={() => openModal(request, "reject")}
-                        className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-xl font-semibold hover:from-red-600 hover:to-pink-600 transition-all shadow-lg hover:shadow-red-500/50"
-                      >
-                        <XCircle className="w-5 h-5" />
-                        Reject
-                      </button>
-                    </div>
-                  )}
-
-                  {request.status === "APPROVED" && (
-                    <div className="flex flex-col gap-3 lg:w-48">
-                      <button
-                        onClick={() => openModal(request, "revoke")}
-                        className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-semibold hover:from-orange-600 hover:to-red-600 transition-all shadow-lg hover:shadow-orange-500/50"
-                      >
-                        <Lock className="w-5 h-5" />
-                        Revoke Access
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        )}
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex justify-center gap-2 mt-8">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="px-4 py-2 bg-slate-700 text-white rounded-lg disabled:opacity-50 hover:bg-slate-600 transition-colors"
-            >
-              Previous
-            </button>
-            <span className="px-4 py-2 bg-slate-800 text-white rounded-lg">
-              Page {page} of {totalPages}
-            </span>
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className="px-4 py-2 bg-slate-700 text-white rounded-lg disabled:opacity-50 hover:bg-slate-600 transition-colors"
-            >
-              Next
-            </button>
-          </div>
-        )}
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-800">Access Requests</h1>
+        <p className="text-gray-500">Manage investor access to project financials.</p>
       </div>
 
-      {/* Modal */}
-      <AnimatePresence>
-        {showModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-            onClick={closeModal}
+      {/* Status Tabs */}
+      <div className="bg-white p-1 rounded-lg shadow-sm mb-6 inline-flex overflow-hidden">
+        {['PENDING', 'APPROVED', 'REJECTED', 'REVOKED'].map((status) => (
+          <button
+            key={status}
+            onClick={() => handleStatusChange(status)}
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${filters.status === status
+                ? 'bg-blue-50 text-blue-600 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
           >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-slate-800 border border-slate-700 rounded-2xl p-8 max-w-md w-full"
-            >
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-white">
-                  {modalType === "reject" ? "Reject Access Request" : "Revoke Access"}
-                </h2>
-                <button
-                  onClick={closeModal}
-                  className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
-                >
-                  <X className="w-5 h-5 text-gray-400" />
-                </button>
-              </div>
+            {status.charAt(0) + status.slice(1).toLowerCase()}
+          </button>
+        ))}
+      </div>
 
-              <p className="text-gray-400 mb-4">
-                {modalType === "reject"
-                  ? "Provide a reason for rejecting this access request:"
-                  : "Provide a reason for revoking access:"}
-              </p>
+      {/* Table */}
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Project</th>
+                <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Investor</th>
+                <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Reason</th>
+                <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {loading ? (
+                <tr><td colSpan="6" className="px-6 py-8 text-center text-gray-500">Loading requests...</td></tr>
+              ) : requests.length === 0 ? (
+                <tr><td colSpan="6" className="px-6 py-8 text-center text-gray-500">No requests found.</td></tr>
+              ) : (
+                requests.map((req) => (
+                  <tr key={req.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 font-medium text-gray-900">{req.project_title}</td>
+                    <td className="px-6 py-4 text-gray-600">{req.requester_email}</td>
+                    <td className="px-6 py-4">{getStatusBadge(req.status)}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate" title={req.reason}>
+                      {req.reason}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      {new Date(req.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex justify-end gap-2">
+                        {req.status === 'PENDING' && (
+                          <>
+                            <button
+                              onClick={() => handleApprove(req.id)}
+                              className="text-green-600 hover:text-green-800 text-sm font-medium hover:underline"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => openActionModal('REJECT', req.id)}
+                              className="text-red-600 hover:text-red-800 text-sm font-medium hover:underline"
+                            >
+                              Reject
+                            </button>
+                          </>
+                        )}
+                        {req.status === 'APPROVED' && (
+                          <button
+                            onClick={() => openActionModal('REVOKE', req.id)}
+                            className="text-orange-600 hover:text-orange-800 text-sm font-medium hover:underline flex items-center gap-1"
+                          >
+                            <RotateCcw className="w-3 h-3" /> Revoke
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
 
-              <textarea
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                className="w-full h-32 bg-slate-700 text-white rounded-xl p-4 border border-slate-600 focus:border-cyan-500 focus:outline-none resize-none"
-                placeholder="Enter reason..."
-              />
+        {/* Pagination */}
+        <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+          <button
+            disabled={!stats.previous}
+            onClick={() => handlePageChange(filters.page - 1)}
+            className={`px-4 py-2 border rounded-md text-sm font-medium ${!stats.previous ? 'bg-gray-50 text-gray-400' : 'bg-white hover:bg-gray-50'}`}
+          >
+            Previous
+          </button>
+          <span className="text-sm text-gray-600">Page {filters.page}</span>
+          <button
+            disabled={!stats.next}
+            onClick={() => handlePageChange(filters.page + 1)}
+            className={`px-4 py-2 border rounded-md text-sm font-medium ${!stats.next ? 'bg-gray-50 text-gray-400' : 'bg-white hover:bg-gray-50'}`}
+          >
+            Next
+          </button>
+        </div>
+      </div>
 
-              <div className="flex gap-3 mt-6">
-                <button
-                  onClick={modalType === "reject" ? handleReject : handleRevoke}
-                  className={`flex-1 px-4 py-3 bg-gradient-to-r ${modalType === "reject"
-                    ? "from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600"
-                    : "from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
-                    } text-white rounded-xl font-semibold transition-all`}
-                >
-                  Confirm {modalType === "reject" ? "Rejection" : "Revocation"}
-                </button>
-                <button
-                  onClick={closeModal}
-                  className="px-4 py-3 bg-slate-700 text-white rounded-xl hover:bg-slate-600 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Action Modal */}
+      {actionModal.isOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 bg-gray-500 opacity-75" onClick={() => setActionModal({ ...actionModal, isOpen: false })}></div>
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+            <div className="inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <form onSubmit={handleActionSubmit}>
+                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    {actionModal.type === 'REJECT' ? 'Reject Request' : 'Revoke Access'}
+                  </h3>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Please provide a reason for this action.
+                  </p>
+                  <textarea
+                    className="w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"
+                    rows="3"
+                    required
+                    placeholder="Reason..."
+                    value={actionModal.reason}
+                    onChange={(e) => setActionModal({ ...actionModal, reason: e.target.value })}
+                  />
+                </div>
+                <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                  <button
+                    type="submit"
+                    className={`w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none sm:ml-3 sm:w-auto sm:text-sm
+                                            ${actionModal.type === 'REJECT' ? 'bg-red-600 hover:bg-red-700' : 'bg-orange-600 hover:bg-orange-700'}`}
+                  >
+                    Confirm
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActionModal({ ...actionModal, isOpen: false })}
+                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
