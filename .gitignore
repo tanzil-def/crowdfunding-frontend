@@ -57,3 +57,33 @@ Thumbs.db
 # Test / temporary files
 test_payment_fix.py
 screenshots/
+# Node modules
+node_modules/
+
+# Env files (local only)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Editor / config files (local only)
+.eslintrc.cjs
+postcss.config.js
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Build output
+dist/
+build/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Test / temporary files
+test_payment_fix.py
+screenshots/
