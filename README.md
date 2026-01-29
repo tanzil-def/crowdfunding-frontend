@@ -25,7 +25,7 @@ High-performance, role-based crowdfunding ecosystem built with **React + Vite**.
 
 ---
 
-## 🖼️ Dashboard Preview
+## 🖼️ Home UI
 
 Here’s the **Home UI screenshot** of the platform:
 
