@@ -1,51 +1,73 @@
-# 🚀 Crowdfunding Trading Platform | Frontend
+# 🚀 Crowdfunding & Trading Platform
 
-High-performance, role-based crowdfunding ecosystem built with **React + Vite**. Scalable, secure, and developer-friendly.
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=FFD62E)
+![Redux](https://img.shields.io/badge/Redux-593D88?style=for-the-badge&logo=redux&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 
----
-
-## 🛠️ Tech Stack
-
-- **Core:** React 18, Vite (Ultra-fast HMR)  
-- **State:** Redux Toolkit (User, Auth, UI state)  
-- **UI:** Tailwind CSS + Framer Motion (Smooth animations)  
-- **Icons:** Lucide React  
-- **API:** Axios + Response Interceptors (JWT Auth, Error handling)  
-- **3D:** Three.js / Custom 3D Viewer integration  
+A high-performance, real-time crowdfunding and capital trading ecosystem designed for **Investors**, **Developers**, and **Admins**. This platform facilitates seamless project submissions, access requests, and investment monitoring with a focus on visual excellence and real-time connectivity.
 
 ---
 
-## ✨ Key Features
+## 🏗️ Technical Architecture
 
-- **Role-Based Access Control (RBAC):** Dedicated flows for Admins, Developers, and Investors  
-- **Project Lifecycle:** Draft → Review → Approved → Funding mapping  
-- **Investment Engine:** Real-time share calculation, portfolio tracking, and wallet management  
-- **Security:** JWT-based persistent sessions & conditional restricted field access  
-- **Interactive UI:** Dynamic marketplace filters, favorite system, and notification bridge  
+### 🔔 Real-time Notification Engine
+Integrated with a robust **Global WebSocket Context**, the platform provides instant feedback loops. Whether it's an Admin approving a project or an Investor requesting access, the system ensures zero-latency alerts with animated badge signals and toast notifications.
 
----
+### 👥 Multi-Role Ecosystem
+- **Admin Command Center:** Monitor project queues, audit logs, and manage user access requests.
+- **Developer Portal:** Seamlessly submit projects for review, manage project media, and track funding status.
+- **Investor Dashboard:** Browse vetted projects, request exclusive access, and manage personal investment portfolios.
 
-## 🖼️ Home UI
-
-Here’s the **Home UI screenshot** of the platform:
-
-![Home UI](screenshots/Home_UIpage.png)
-
-> *Note: The image path is relative to the `README.md` file in the root directory. GitHub supports spaces using `%20`.*  
+### 💾 State & Data Management
+utilizing **Redux Toolkit** for predictable global state and **React Context API** for environment-wide services (like WebSockets), ensuring data consistency across complex dashboard transitions.
 
 ---
 
-## 🏗️ Architecture
+## 🖼️ App Preview (Gallery)
 
-- `/src/api`: Centralized service layer (`axiosInstance` + role-specific handlers)  
-- `/src/components`: Atomic UI components & Layout wrappers  
-- `/src/pages`: Role-segregated views (Admin / Dev / Investor)  
-- `/src/router`: Guarded routes with role checking  
+| Home Page | Admin Dashboard |
+| :---: | :---: |
+| ![Home UI](screenshots/Home_UIpage.png) | ![Admin Dashboard](screenshots/Admindeshborad.png) |
+
+| Developer Portal | Investor Interface |
+| :---: | :---: |
+| ![Developer Portal](screenshots/developer%20.png) | ![Investor Interface](screenshots/investor.png) |
 
 ---
 
-## 🚀 Quick Start
+## 🛠️ Quick Start
 
-### 1️⃣ Install dependencies
+### Prerequisites
+- Node.js (v18+)
+- npm / yarn
+
+### Installation
 ```bash
+# Clone the repository
+git clone https://github.com/tanzil-def/crowdfunding-frontend.git
+
+# Install dependencies
 npm install
+
+# Setup environment variables
+# Copy .env.example to .env and configure VITE_WS_URL and VITE_API_URL
+```
+
+### Development
+```bash
+npm run dev
+```
+
+---
+
+## 🌐 Live Demo
+[Explore the Platform (Placeholder)](https://github.com/tanzil-def)
+
+## 👨‍💻 Author
+**Tanzil**  
+*Intern, BrainStation-23*  
+[GitHub Profile](https://github.com/tanzil-def)
+
+---
+*Developed with ❤️ and focus on visual excellence.*
