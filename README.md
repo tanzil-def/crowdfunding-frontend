@@ -32,7 +32,7 @@ utilizing **Redux Toolkit** for predictable global state and **React Context API
 
 | Developer Portal | Investor Interface |
 | :---: | :---: |
-| ![Developer Portal](screenshots/developer%20.png) | ![Investor Interface](screenshots/investor.png) |
+| ![Developer Portal](screenshots/developer.png) | ![Investor Interface](screenshots/investor.png) |
 
 ---
 
@@ -62,9 +62,11 @@ npm run dev
 ---
 
 ## 🌐 Live Demo
-[Explore the Platform (Placeholder)](https://github.com/tanzil-def)
+[Explore the Platform](http://localhost:5173/)
 
 ## 👨‍💻 Author
+<img src="https://github.com/tanzil-def.png" width="100px" style="border-radius: 50%;" />
+
 **Tanzil**  
 *Intern, BrainStation-23*  
 [GitHub Profile](https://github.com/tanzil-def)
