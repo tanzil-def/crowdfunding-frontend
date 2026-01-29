@@ -41,8 +41,10 @@ const NotificationCenter = () => {
       const data = await notificationService.fetchAll();
       dispatch(setNotifications(data.results || data));
 
-      const unreadData = await notificationService.getUnreadCount();
-      dispatch(setUnreadCount(unreadData.unread_count || 0));
+      // sync with the count
+      const result = data.results || data;
+      const count = Array.isArray(result) ? result.filter(n => !n.is_read).length : 0;
+      dispatch(setUnreadCount(count));
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
       toast.error('Failed to sync notifications');
@@ -66,25 +68,39 @@ const NotificationCenter = () => {
         dispatch(markRead(notification.id));
       }
 
-      // Route based on type
+      const meta = notification.metadata || {};
+
+      // Route based on type - matching backend types and routes.jsx
       switch (notification.type) {
+        // Project Events
         case 'PROJECT_APPROVED':
           navigate('/developer/projects');
           break;
         case 'PROJECT_REJECTED':
         case 'PROJECT_CHANGES_REQUESTED':
-          navigate(`/developer/projects/${notification.metadata?.project_id}/edit`);
+          navigate(`/developer/projects/${meta.project_id || notification.id}/edit`);
+          break;
+        case 'PROJECT_SUBMITTED':
+          navigate('/admin/pending-projects');
+          break;
+
+        // Access Events
+        case 'ACCESS_REQUESTED':
+          navigate('/admin/access-requests');
           break;
         case 'ACCESS_APPROVED':
           navigate('/investor/portfolio');
           break;
-        case 'ACCESS_REQUESTED':
-          navigate('/admin/access-requests');
+        case 'ACCESS_REJECTED':
+          navigate('/investor/browse');
           break;
+
+        // Investment Events
         case 'PAYMENT_SUCCESS':
         case 'PAYMENT_FAILED':
           navigate('/investor/investments');
           break;
+
         default:
         // Stay on page
       }
@@ -93,9 +109,9 @@ const NotificationCenter = () => {
     }
   };
 
-  const filteredNotifications = notifications.filter(n => {
+  const filteredNotifications = (notifications || []).filter(n => {
     const matchesFilter = filter === 'ALL' || (filter === 'UNREAD' && !n.is_read);
-    const matchesSearch = n.message.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = n.message?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 

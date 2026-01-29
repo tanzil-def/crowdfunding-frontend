@@ -8,7 +8,6 @@ import adminService from "../../api/adminService";
 import developerService from "../../api/developerService";
 import { setPendingProjectsCount } from "../../store/slices/adminSlice";
 import { setNotifications } from "../../store/slices/notificationSlice";
-import { useNotificationWebSocket } from "../../hooks/useNotificationWebSocket";
 import { useEffect, useRef } from "react";
 import { toast } from "react-hot-toast";
 
@@ -18,8 +17,7 @@ const MasterLayout = ({ role: requiredRole }) => {
   const dispatch = useDispatch();
   const previousCountRef = useRef(pendingProjectsCount);
 
-  // ✅ Initialize WebSocket for real-time notifications
-  useNotificationWebSocket(user);
+
 
   useEffect(() => {
     if (isAuthenticated && user?.role === "ADMIN") {

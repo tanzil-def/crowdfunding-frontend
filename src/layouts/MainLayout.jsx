@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { Toaster } from 'react-hot-toast';
-import { useNotificationWebSocket } from '../hooks/useNotificationWebSocket';
 import { setNotifications } from '../store/slices/notificationSlice';
 import notificationService from '../api/notificationService';
 
@@ -14,8 +13,7 @@ const MainLayout = () => {
     const dispatch = useDispatch();
     const user = useSelector((state) => state.user?.user);
 
-    // ✅ Initialize WebSocket for real-time notifications
-    useNotificationWebSocket(user);
+
 
     // ✅ Fetch initial notifications on mount
     useEffect(() => {

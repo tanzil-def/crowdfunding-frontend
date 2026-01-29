@@ -211,7 +211,7 @@ const AdminDashboard = () => {
         <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[
             { to: "/admin/users", icon: <Users />, label: "User Control", desc: "Verify and manage accounts", color: "blue" },
-            { to: "/admin/pending-projects", icon: <CheckCircle />, label: "Review Center", desc: "Approve pending assets", count: stats.pending_projects, color: "emerald" },
+            { to: "/admin/pending-projects", icon: <CheckCircle />, label: "Pending Projects", desc: "Approve pending assets", count: stats.pending_projects, color: "emerald" },
             { to: "/admin/payments", icon: <DollarSign />, label: "Settlements", desc: "Review financial history", color: "purple" },
             { to: "/admin/audit-logs", icon: <Clock />, label: "System Logs", desc: "Audit protocol activity", color: "orange" },
           ].map((action, i) => (

@@ -13,7 +13,8 @@ const notificationSlice = createSlice({
     reducers: {
         setNotifications: (state, action) => {
             // If it's a paginated response, results are in .results
-            state.notifications = action.payload.results || action.payload;
+            const data = action.payload.results || action.payload;
+            state.notifications = Array.isArray(data) ? data : [];
         },
         addNotification: (state, action) => {
             state.notifications.unshift(action.payload);

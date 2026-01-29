@@ -32,8 +32,11 @@ const NotificationBell = () => {
         />
 
         {unreadCount > 0 && (
-          <span className="absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[8px] font-black text-white shadow-lg border-2 border-slate-900">
-            {unreadCount > 99 ? '99+' : unreadCount}
+          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[10px] font-black text-white shadow-lg border-2 border-slate-900 animate-in zoom-in duration-200">
+            <span className="absolute inset-0 rounded-full bg-rose-500 animate-ping opacity-20" />
+            <span className="relative">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
           </span>
         )}
       </button>

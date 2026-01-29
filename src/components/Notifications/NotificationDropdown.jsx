@@ -18,29 +18,40 @@ const NotificationDropdown = ({ notifications, onClose }) => {
                 dispatch(markRead(notification.id));
             }
 
-            // Route based on type
+            const meta = notification.metadata || {};
+
+            // Route mapping based on backend types and actual routes.jsx
             switch (notification.type) {
+                // Project Events
                 case 'PROJECT_APPROVED':
                     navigate('/developer/projects');
                     break;
                 case 'PROJECT_REJECTED':
-                    navigate(`/developer/projects/${notification.metadata?.project_id}/edit`);
-                    break;
                 case 'PROJECT_CHANGES_REQUESTED':
-                    navigate(`/developer/projects/${notification.metadata?.project_id}/edit`);
+                    navigate(`/developer/projects/${meta.project_id || notification.id}/edit`);
+                    break;
+                case 'PROJECT_SUBMITTED':
+                    navigate('/admin/pending-projects');
+                    break;
+
+                // Access Events
+                case 'ACCESS_REQUESTED':
+                    navigate('/admin/access-requests');
                     break;
                 case 'ACCESS_APPROVED':
                     navigate('/investor/portfolio');
                     break;
-                case 'ACCESS_REQUESTED':
-                    navigate('/admin/access-requests');
+                case 'ACCESS_REJECTED':
+                    navigate('/investor/browse');
                     break;
+
+                // Investment Events
                 case 'PAYMENT_SUCCESS':
-                    navigate('/investor/investments');
-                    break;
                 case 'PAYMENT_FAILED':
                     navigate('/investor/investments');
                     break;
+
+                // General Fallback
                 default:
                     navigate('/notifications');
             }

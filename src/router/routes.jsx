@@ -3,7 +3,7 @@ import { createBrowserRouter, Outlet } from "react-router-dom";
 import MasterLayout from "../pages/MasterLayout/MasterLayout";
 import PublicHeader from "../components/Header/PublicHeader";
 import { useSelector } from "react-redux";
-import { useNotificationWebSocket } from "../hooks/useNotificationWebSocket";
+// import { useNotificationWebSocket } from "../hooks/useNotificationWebSocket";
 import { Toaster } from "react-hot-toast";
 
 // ==========================
@@ -68,9 +68,6 @@ import Footer from "../components/Footer/Footer";
 // ==========================
 const PublicLayout = () => {
   const { user, isAuthenticated } = useSelector((state) => state.user);
-
-  // ✅ Initialize WebSocket for real-time notifications even on public pages
-  useNotificationWebSocket(isAuthenticated ? user : null);
 
   return (
     <div className="flex flex-col min-h-screen">

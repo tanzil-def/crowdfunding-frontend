@@ -4,44 +4,7 @@ import { useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 import { Bell, LogOut, Menu, X, Search } from "lucide-react";
 
-const NotificationBell = () => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const notifications = [
-    { id: 1, title: "Investment Success", message: "You invested in Project X", read: false },
-    { id: 2, title: "Project Approved", message: "Your project got approved!", read: true },
-  ];
-
-  const unread = notifications.filter(n => !n.read).length;
-
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
-      >
-        <Bell size={22} />
-        {unread > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5">
-            {unread}
-          </span>
-        )}
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 mt-3 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl border z-50">
-          <div className="p-4 font-bold border-b">Notifications</div>
-          {notifications.map(n => (
-            <div key={n.id} className="p-3 border-b hover:bg-gray-100">
-              <p className="font-medium">{n.title}</p>
-              <p className="text-sm text-gray-600">{n.message}</p>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
+import NotificationBell from "./NotificationBell";
 
 const Header = () => {
   const navigate = useNavigate();
