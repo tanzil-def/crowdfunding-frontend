@@ -32,27 +32,19 @@ const Register = () => {
 
     setLoading(true);
     try {
-      const response = await authService.register(formData);
-
-      // Since authService returns data.data (the user object) on success,
-      // we can assume if it didn't throw, it was successful.
+      await authService.register(formData);
       toast.success("Registration successful! Please check your email.");
       navigate("/login");
-
     } catch (err) {
       console.error("Registration Error:", err.response?.data);
-
-      // Extract detailed error messages
       const errorData = err.response?.data;
       let errorMsg = "Registration failed";
-
       if (errorData) {
         if (typeof errorData === 'string') {
           errorMsg = errorData;
         } else if (errorData.message) {
           errorMsg = errorData.message;
         } else if (typeof errorData === 'object') {
-          // Handle DRF validation error object e.g. { email: ["..."], role: ["..."] }
           const details = Object.entries(errorData)
             .map(([field, msgs]) => {
               const msg = Array.isArray(msgs) ? msgs[0] : msgs;
@@ -62,7 +54,6 @@ const Register = () => {
           errorMsg = details || errorMsg;
         }
       }
-
       setError(errorMsg);
       toast.error(errorMsg);
     } finally {
@@ -71,131 +62,155 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center bg-black p-6 overflow-hidden">
-      <div className="absolute inset-0">
+    <div className="min-h-screen relative flex items-center justify-center bg-[#0a0a0b] p-4 md:p-6 overflow-hidden">
+      {/* Background Layer with Animated Gradient */}
+      <div className="absolute inset-0 z-0">
         <img
           src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80"
           alt="Background"
-          className="w-full h-full object-cover opacity-60"
+          className="w-full h-full object-cover opacity-30 scale-105"
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-950/95 via-slate-900/80 to-black/95" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-black via-black/80 to-emerald-900/20" />
       </div>
 
-      <div className="relative w-full max-w-md bg-slate-900/85 backdrop-blur-2xl p-8 md:p-10 rounded-[2.5rem] border border-slate-700/50 shadow-2xl z-10">
-        <div className="text-center mb-8">
-          <h2 className="text-4xl font-black text-white mb-2 tracking-tight uppercase">Create Account</h2>
-          <p className="text-slate-400 text-sm">Join the crowdfunding revolution</p>
+      {/* Main Glass Card */}
+      <div className="relative w-full max-w-[520px] bg-white/[0.03] backdrop-blur-xl p-8 md:p-12 rounded-[2rem] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-10 overflow-hidden">
+
+        {/* Subtle Inner Glow */}
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-emerald-500/10 blur-[80px] rounded-full" />
+
+        <div className="text-center mb-10">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-3 tracking-tight">
+            Create <span className="text-emerald-500">Account</span>
+          </h2>
+          <p className="text-slate-400 font-medium text-sm tracking-wide">
+            JOIN THE FUTURE OF INVESTMENT
+          </p>
         </div>
 
         {error && (
-          <div className="bg-red-500/10 text-red-400 p-4 rounded-2xl mb-6 text-sm border border-red-500/20 text-center">
+          <div className="bg-red-500/10 text-red-400 p-4 rounded-xl mb-6 text-xs font-medium border border-red-500/20 animate-pulse">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleRegister} className="space-y-4">
+        <form onSubmit={handleRegister} className="space-y-5">
+          {/* Name Row */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">First Name</label>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.15em] ml-1">First Name</label>
               <input
                 name="first_name"
                 value={formData.first_name}
                 onChange={handleChange}
                 placeholder="John"
-                className="w-full px-5 py-3 bg-slate-950/80 border border-slate-700 rounded-2xl text-gray-100 placeholder-gray-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-inner"
+                className="w-full px-4 py-3 bg-white/[0.05] border border-white/10 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:bg-white/[0.08] transition-all duration-300"
                 required
               />
             </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Last Name</label>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.15em] ml-1">Last Name</label>
               <input
                 name="last_name"
                 value={formData.last_name}
                 onChange={handleChange}
                 placeholder="Doe"
-                className="w-full px-5 py-3 bg-slate-950/80 border border-slate-700 rounded-2xl text-gray-100 placeholder-gray-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-inner"
+                className="w-full px-4 py-3 bg-white/[0.05] border border-white/10 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:bg-white/[0.08] transition-all duration-300"
                 required
               />
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Email Address</label>
+          {/* Email */}
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.15em] ml-1">Email Address</label>
             <input
               name="email"
               type="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="email@example.com"
-              className="w-full px-5 py-3 bg-slate-950/80 border border-slate-700 rounded-2xl text-gray-100 placeholder-gray-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-inner"
+              placeholder="name@company.com"
+              className="w-full px-4 py-3 bg-white/[0.05] border border-white/10 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:bg-white/[0.08] transition-all duration-300"
               required
-              autoComplete="email"
             />
           </div>
 
+          {/* Password Row */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Password</label>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.15em] ml-1">Password</label>
               <input
                 name="password"
                 type="password"
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="••••••••"
-                className="w-full px-5 py-3 bg-slate-950/80 border border-slate-700 rounded-2xl text-gray-100 placeholder-gray-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-inner"
+                className="w-full px-4 py-3 bg-white/[0.05] border border-white/10 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:bg-white/[0.08] transition-all duration-300"
                 required
               />
             </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Confirm</label>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.15em] ml-1">Confirm</label>
               <input
                 name="password_confirm"
                 type="password"
                 value={formData.password_confirm}
                 onChange={handleChange}
                 placeholder="••••••••"
-                className="w-full px-5 py-3 bg-slate-950/80 border border-slate-700 rounded-2xl text-gray-100 placeholder-gray-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-inner"
+                className="w-full px-4 py-3 bg-white/[0.05] border border-white/10 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:bg-white/[0.08] transition-all duration-300"
                 required
               />
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">I am a</label>
+          {/* Role Selector */}
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.15em] ml-1">Account Purpose</label>
             <select
               name="role"
               value={formData.role}
               onChange={handleChange}
-              className="w-full px-5 py-3 bg-slate-950/80 border border-slate-700 rounded-2xl text-gray-100 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all"
+              className="w-full px-4 py-3 bg-white/[0.05] border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40 transition-all cursor-pointer appearance-none"
             >
-              <option value="INVESTOR">Investor</option>
-              <option value="DEVELOPER">Developer</option>
+              <option className="bg-[#1a1a1a]" value="INVESTOR">Investor - I want to invest</option>
+              <option className="bg-[#1a1a1a]" value="DEVELOPER">Developer - I want to build</option>
             </select>
           </div>
 
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 mt-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl transition-all active:scale-[0.98] shadow-lg shadow-emerald-900/20 disabled:opacity-50 flex items-center justify-center gap-2 text-lg"
+            className="w-full py-4 mt-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-all duration-300 active:scale-[0.98] shadow-[0_10px_20px_rgba(16,185,129,0.2)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm uppercase tracking-widest"
           >
-            {loading ? "Creating Account..." : "Create Account"}
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                Processing...
+              </span>
+            ) : "Create Account"}
           </button>
         </form>
 
-        <div className="relative my-6">
+        <div className="relative my-8">
           <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-slate-700/50"></span>
+            <div className="w-full border-t border-white/5"></div>
           </div>
-          <div className="relative flex justify-center text-xs uppercase tracking-widest">
-            <span className="bg-slate-900/0 px-4 text-slate-500 font-bold">Or continue with</span>
+          <div className="relative flex justify-center text-[10px] uppercase tracking-[0.2em]">
+            <span className="bg-[#121214] px-4 text-slate-500 font-semibold">Or continue with</span>
           </div>
         </div>
 
-        <GoogleLoginButton />
+        <div className="hover:scale-[1.01] transition-transform duration-300">
+          <GoogleLoginButton />
+        </div>
 
-        <p className="text-center text-slate-400 text-sm mt-6">
+        <p className="text-center text-slate-500 text-sm mt-8">
           Already have an account?{" "}
-          <Link to="/login" className="text-emerald-500 hover:text-emerald-400 font-bold underline underline-offset-4">
+          <Link to="/login" className="text-emerald-500 hover:text-emerald-400 font-bold transition-colors">
             Sign in
           </Link>
         </p>

@@ -20,7 +20,7 @@ const BrowseProjects = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [sortBy, setSortBy] = useState("-created_at");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -47,18 +47,25 @@ const BrowseProjects = () => {
     { value: "total_project_value", label: "Lowest Value" },
   ];
 
+  // Fetch projects when filters change
   useEffect(() => {
     fetchProjects();
+  }, [page, search, selectedCategory, sortBy]);
+
+  // Fetch favorites only once on mount
+  useEffect(() => {
     fetchFavorites();
-  }, [page, search, category, sortBy]);
+  }, []);
 
   const fetchFavorites = async () => {
     try {
-      const data = await investorService.getFavorites({ page_size: 100 });
-      const favSet = new Set((data.results || []).map(f => f.project));
+      const response = await investorService.getFavorites({ page_size: 100 });
+      const results = response.results || (response.data && response.data.results) || [];
+      const favSet = new Set(results.map(f => f.project));
       setFavorites(favSet);
     } catch (err) {
       console.error("Failed to fetch favorites:", err);
+      // Favorites failure should not block anything
     }
   };
 
@@ -71,14 +78,24 @@ const BrowseProjects = () => {
         ordering: sortBy,
       };
       if (search) params.search = search;
-      if (category && category !== "All") params.category = category;
+      if (selectedCategory && selectedCategory !== "All") {
+        params.category = selectedCategory.toUpperCase().replace(/\s+/g, '_');
+      }
 
-      const data = await investorService.browseProjects(params);
-      setProjects(data.results || []);
-      setTotalPages(Math.ceil((data.count || 0) / 12));
+      console.log("Fetching projects with params:", params); // Debug log
+      const response = await investorService.browseProjects(params);
+
+      // Defensive mapping to ensure we get the results array
+      const projectList = response.results || (response.data && response.data.results) || [];
+      const totalCount = response.count || (response.data && response.data.count) || 0;
+
+      console.log("Received projects:", projectList.length); // Debug log
+      setProjects(projectList);
+      setTotalPages(Math.ceil(totalCount / 12));
     } catch (err) {
       console.error("BrowseProjects fetch error:", err);
       toast.error("Failed to load projects");
+      setProjects([]); // Clear projects on error
     } finally {
       setLoading(false);
     }
@@ -173,10 +190,10 @@ const BrowseProjects = () => {
               <button
                 key={cat}
                 onClick={() => {
-                  setCategory(cat === "All" ? "" : cat);
+                  setSelectedCategory(cat === "All" ? "" : cat);
                   setPage(1);
                 }}
-                className={`px-6 py-3 rounded-xl font-semibold whitespace-nowrap transition-all ${(category === cat || (cat === "All" && !category))
+                className={`px-6 py-3 rounded-xl font-semibold whitespace-nowrap transition-all ${(selectedCategory === cat || (cat === "All" && !selectedCategory))
                   ? "bg-gradient-to-r from-violet-500 to-purple-500 text-white shadow-lg shadow-violet-500/50"
                   : "bg-slate-700/50 text-gray-300 hover:bg-slate-700"
                   }`}

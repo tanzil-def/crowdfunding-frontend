@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import developerService from "../../api/developerService";
-import { motion } from "framer-motion";
-import { CheckCircle, AlertCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { CheckCircle, AlertCircle, ChevronRight, ChevronLeft, Upload, Info } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 const CreateProject = () => {
@@ -28,15 +28,15 @@ const CreateProject = () => {
   });
 
   const categories = [
-    "TECHNOLOGY",
-    "REAL_ESTATE",
-    "ENERGY",
-    "HEALTHCARE",
-    "AGRICULTURE",
-    "MANUFACTURING",
-    "RETAIL",
-    "SERVICES",
-    "OTHER",
+    { value: "TECHNOLOGY", label: "Technology" },
+    { value: "REAL_ESTATE", label: "Real Estate" },
+    { value: "ENERGY", label: "Energy" },
+    { value: "HEALTHCARE", label: "Healthcare" },
+    { value: "AGRICULTURE", label: "Agriculture" },
+    { value: "MANUFACTURING", label: "Manufacturing" },
+    { value: "RETAIL", label: "Retail" },
+    { value: "SERVICES", label: "Services" },
+    { value: "OTHER", label: "Other" },
   ];
 
   const handleChange = (e) => {
@@ -49,7 +49,6 @@ const CreateProject = () => {
 
   const handleFileChange = (e) => {
     const { name, files: selectedFiles } = e.target;
-
     if (name === "images") {
       setFiles({ ...files, images: Array.from(selectedFiles) });
     } else if (name === "model_3d") {
@@ -58,9 +57,8 @@ const CreateProject = () => {
   };
 
   const handleCreateDraft = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setLoading(true);
-
     try {
       const submitData = {
         title: formData.title || "Untitled Project",
@@ -73,16 +71,11 @@ const CreateProject = () => {
         is_3d_restricted: !!formData.is_3d_restricted,
       };
 
-      console.log("Submitting Project Data:", submitData);
       const response = await developerService.createProject(submitData);
-      // Access id directly from response (due to service unwrapping)
       const projectId = response.id || response.data?.id;
 
-      if (!projectId) {
-        throw new Error("Failed to get project ID from response");
-      }
+      if (!projectId) throw new Error("Failed to get project ID");
 
-      // Upload media if any
       if (files.images.length > 0) {
         for (const image of files.images) {
           const mediaFormData = new FormData();
@@ -101,14 +94,10 @@ const CreateProject = () => {
         await developerService.uploadProjectMedia(projectId, mediaFormData);
       }
 
-      toast.success("Project created as draft!");
+      toast.success("Project saved as draft!");
       navigate("/developer/projects");
     } catch (err) {
-      console.error("Project Creation Error Details:", err.response?.data);
-      const errorMsg = err.response?.data?.detail ||
-        (err.response?.data && typeof err.response.data === 'object' ? Object.entries(err.response.data).map(([k, v]) => `${k}: ${v}`).join(', ') : null) ||
-        "Failed to create project";
-      toast.error(errorMsg);
+      toast.error("Failed to create project");
     } finally {
       setLoading(false);
     }
@@ -119,9 +108,7 @@ const CreateProject = () => {
       toast.error("Please complete all required fields");
       return;
     }
-
     setLoading(true);
-
     try {
       const submitData = {
         title: formData.title,
@@ -134,17 +121,9 @@ const CreateProject = () => {
         is_3d_restricted: !!formData.is_3d_restricted,
       };
 
-      console.log("Submitting and Publishing Project Data:", submitData);
       const response = await developerService.createProject(submitData);
+      const projectId = response.id || response.data?.id;
 
-      // Handle potential response structure differences (service might return data directly or wrapped)
-      const projectId = response.id || response.data?.id || (response.data && response.data.id);
-
-      if (!projectId) {
-        throw new Error("Failed to get project ID from response");
-      }
-
-      // Upload media
       if (files.images.length > 0) {
         for (const image of files.images) {
           const mediaFormData = new FormData();
@@ -163,11 +142,10 @@ const CreateProject = () => {
         await developerService.uploadProjectMedia(projectId, mediaFormData);
       }
 
-      // Redirect to submit page
-      toast.success("Project created! Redirecting to submit...");
+      toast.success("Project created! Submitting...");
       navigate(`/developer/projects/${projectId}/submit`);
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Failed to create project");
+      toast.error("Failed to create and submit project");
     } finally {
       setLoading(false);
     }
@@ -178,313 +156,184 @@ const CreateProject = () => {
     : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-emerald-900 to-slate-900 p-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-[#F8FAFC] p-4 md:p-12 font-sans text-slate-900">
+      <div className="max-w-3xl mx-auto">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent mb-2">
-            Create New Project
+        <div className="mb-10 text-center md:text-left">
+          <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight mb-2">
+            Create <span className="text-emerald-600">New Project</span>
           </h1>
-          <p className="text-gray-400 text-lg">Fill in the details to create your crowdfunding project</p>
-        </motion.div>
-
-        {/* Step Indicators */}
-        <div className="flex gap-4 mb-8">
-          <StepIndicator active={step === 1} completed={step > 1} number={1} label="Basic Info" />
-          <StepIndicator active={step === 2} completed={step > 2} number={2} label="Financial" />
-          <StepIndicator active={step === 3} number={3} label="Media & Submit" />
+          <p className="text-slate-500 font-medium">Crowdfunding Platform.</p>
         </div>
 
-        <form onSubmit={handleCreateDraft} className="space-y-6">
-          {/* Step 1: Basic Info */}
+        {/* Custom Progress Stepper */}
+        <div className="flex items-center justify-between mb-12 relative">
+          <div className="absolute top-1/2 left-0 w-full h-0.5 bg-slate-200 -z-10"></div>
+          <StepCircle number={1} label="Basic Info" active={step >= 1} current={step === 1} />
+          <StepCircle number={2} label="Financials" active={step >= 2} current={step === 2} />
+          <StepCircle number={3} label="Media" active={step === 3} current={step === 3} />
+        </div>
+
+        <AnimatePresence mode="wait">
+          {/* Step 1 */}
           {step === 1 && (
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="bg-slate-800/50 backdrop-blur-xl rounded-2xl p-8 border border-slate-700/50 space-y-6"
+              key="step1"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200 space-y-6"
             >
-              <div>
-                <label className="block text-sm font-bold text-slate-300 mb-2">Project Title *</label>
-                <input
-                  name="title"
-                  value={formData.title}
-                  onChange={handleChange}
-                  placeholder="Enter a compelling project title"
-                  className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition-all"
-                  required
-                />
-              </div>
+              <InputGroup label="Project Title *" name="title" value={formData.title} onChange={handleChange} placeholder="e.g. Solar City Initiative" />
+
+              <InputGroup label="Short Description *" name="short_description" value={formData.short_description} onChange={handleChange} placeholder="Brief pitch for your project" maxLength="500" />
 
               <div>
-                <label className="block text-sm font-bold text-slate-300 mb-2">Short Description *</label>
-                <input
-                  name="short_description"
-                  value={formData.short_description}
-                  onChange={handleChange}
-                  placeholder="A brief summary (max 500 chars)"
-                  className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition-all"
-                  maxLength="500"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-slate-300 mb-2">Description *</label>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Full Description *</label>
                 <textarea
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
-                  placeholder="Describe your project in detail..."
                   rows="5"
-                  className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
+                  placeholder="Tell your story..."
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">{formData.description.length} characters</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-bold text-slate-300 mb-2">Category *</label>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Category *</label>
                   <select
                     name="category"
                     value={formData.category}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 outline-none transition-all cursor-pointer"
                     required
                   >
-                    <option value="">Select a category</option>
+                    <option value="">Choose category</option>
                     {categories.map((cat) => (
-                      <option key={cat} value={cat}>{cat}</option>
+                      <option key={cat.value} value={cat.value}>{cat.label}</option>
                     ))}
                   </select>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-bold text-slate-300 mb-2">Duration (days) *</label>
-                  <input
-                    type="number"
-                    name="duration_days"
-                    value={formData.duration_days}
-                    onChange={handleChange}
-                    min="1"
-                    max="365"
-                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition-all"
-                    required
-                  />
-                </div>
+                <InputGroup label="Duration (Days) *" name="duration_days" type="number" value={formData.duration_days} onChange={handleChange} />
               </div>
 
-              <button
-                type="button"
-                onClick={() => setStep(2)}
-                className="w-full py-3 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-emerald-500/50"
-              >
-                Next: Financial Details
+              <button onClick={() => setStep(2)} className="w-full py-4 bg-slate-900 text-white font-bold rounded-2xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2">
+                Continue <ChevronRight size={18} />
               </button>
             </motion.div>
           )}
 
-          {/* Step 2: Financial */}
+          {/* Step 2 */}
           {step === 2 && (
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="bg-slate-800/50 backdrop-blur-xl rounded-2xl p-8 border border-slate-700/50 space-y-6"
+              key="step2"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200 space-y-6"
             >
-              <div>
-                <label className="block text-sm font-bold text-slate-300 mb-2">Total Project Value ($) *</label>
-                <input
-                  type="number"
-                  name="total_project_value"
-                  value={formData.total_project_value}
-                  onChange={handleChange}
-                  placeholder="1000000"
-                  min="1"
-                  step="0.01"
-                  className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition-all"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-slate-300 mb-2">Total Shares *</label>
-                <input
-                  type="number"
-                  name="total_shares"
-                  value={formData.total_shares}
-                  onChange={handleChange}
-                  placeholder="10000"
-                  min="1"
-                  className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition-all"
-                  required
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <InputGroup label="Total Value ($) *" name="total_project_value" type="number" value={formData.total_project_value} onChange={handleChange} placeholder="0.00" />
+                <InputGroup label="Total Shares *" name="total_shares" type="number" value={formData.total_shares} onChange={handleChange} placeholder="1000" />
               </div>
 
               {sharePrice > 0 && (
-                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 flex items-center gap-3">
-                  <CheckCircle className="w-5 h-5 text-emerald-400" />
+                <div className="bg-emerald-50 p-4 rounded-2xl flex items-center gap-4 border border-emerald-100">
+                  <div className="p-2 bg-emerald-500 rounded-full text-white">
+                    <CheckCircle size={20} />
+                  </div>
                   <div>
-                    <p className="text-emerald-400 font-bold text-lg">
-                      Price per Share: ${sharePrice.toFixed(2)}
-                    </p>
-                    <p className="text-emerald-300 text-sm">
-                      Investors will pay ${sharePrice.toFixed(2)} per share
-                    </p>
+                    <p className="text-emerald-800 font-bold">Estimated Share Price: ${sharePrice.toFixed(2)}</p>
+                    <p className="text-emerald-600 text-xs">Calculated based on value and total shares.</p>
                   </div>
                 </div>
               )}
 
               <div>
-                <label className="block text-sm font-bold text-slate-300 mb-2">
-                  Restricted Information (Optional)
-                </label>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Restricted Data (Optional)</label>
                 <textarea
                   name="restricted_fields"
                   value={formData.restricted_fields}
                   onChange={handleChange}
-                  placeholder="Enter sensitive project details that require access approval..."
-                  rows="3"
-                  className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 outline-none transition-all"
+                  placeholder="Private details for approved investors..."
                 />
-                <p className="text-xs text-gray-500 mt-1">This information will require admin approval for investors to view</p>
               </div>
 
               <div className="flex gap-4">
-                <button
-                  type="button"
-                  onClick={() => setStep(1)}
-                  className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl transition-all"
-                >
-                  Back
+                <button onClick={() => setStep(1)} className="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-all flex items-center justify-center gap-2">
+                  <ChevronLeft size={18} /> Back
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setStep(3)}
-                  className="flex-1 py-3 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-emerald-500/50"
-                >
-                  Next: Upload Media
+                <button onClick={() => setStep(3)} className="flex-1 py-4 bg-slate-900 text-white font-bold rounded-2xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2">
+                  Continue <ChevronRight size={18} />
                 </button>
               </div>
             </motion.div>
           )}
 
-          {/* Step 3: Media */}
+          {/* Step 3 */}
           {step === 3 && (
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="bg-slate-800/50 backdrop-blur-xl rounded-2xl p-8 border border-slate-700/50 space-y-6"
+              key="step3"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200 space-y-8"
             >
-              <div>
-                <label className="block text-sm font-bold text-slate-300 mb-2">Project Images</label>
-                <input
-                  type="file"
-                  name="images"
-                  accept="image/*"
-                  multiple
-                  onChange={handleFileChange}
-                  className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-emerald-600 file:text-white file:font-bold hover:file:bg-emerald-500 transition-all"
-                />
-                {files.images.length > 0 && (
-                  <p className="text-sm text-emerald-400 mt-2 flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4" />
-                    {files.images.length} image{files.images.length > 1 ? "s" : ""} selected
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-slate-300 mb-2">3D Model (Optional)</label>
-                <input
-                  type="file"
-                  name="model_3d"
-                  accept=".glb,.gltf,.obj,.fbx"
-                  onChange={handleFileChange}
-                  className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-emerald-600 file:text-white file:font-bold hover:file:bg-emerald-500 transition-all"
-                />
-                {files.model_3d && (
-                  <p className="text-sm text-emerald-400 mt-2 flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4" />
-                    {files.model_3d.name}
-                  </p>
-                )}
-              </div>
-
-              {files.model_3d && (
-                <div className="flex items-center gap-3 p-4 bg-slate-700/30 rounded-xl">
-                  <input
-                    type="checkbox"
-                    id="is_3d_restricted"
-                    name="is_3d_restricted"
-                    checked={formData.is_3d_restricted}
-                    onChange={handleChange}
-                    className="w-5 h-5 rounded border-gray-600 text-emerald-500 focus:ring-emerald-500 bg-slate-700"
-                  />
-                  <label htmlFor="is_3d_restricted" className="text-gray-300">
-                    Restrict 3D model access (requires approval)
-                  </label>
+              <div className="space-y-4">
+                <div className="border-2 border-dashed border-slate-200 rounded-3xl p-10 text-center hover:border-emerald-500 transition-all relative">
+                  <input type="file" name="images" multiple onChange={handleFileChange} className="absolute inset-0 opacity-0 cursor-pointer" />
+                  <Upload className="mx-auto text-slate-400 mb-3" size={32} />
+                  <p className="text-slate-600 font-bold">Click to upload images</p>
+                  <p className="text-slate-400 text-xs mt-1">PNG, JPG up to 10MB</p>
+                  {files.images.length > 0 && <p className="mt-4 text-emerald-600 font-bold text-sm">{files.images.length} files selected</p>}
                 </div>
-              )}
 
-              <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-blue-400 font-semibold text-sm mb-1">Note</p>
-                  <p className="text-gray-300 text-sm">
-                    You can add more media files later from the project media page
-                  </p>
+                <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200">
+                  <label className="block text-sm font-bold text-slate-700 mb-3">3D Model (Optional)</label>
+                  <input type="file" name="model_3d" onChange={handleFileChange} className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer" />
                 </div>
               </div>
 
-              <div className="flex gap-4">
-                <button
-                  type="button"
-                  onClick={() => setStep(2)}
-                  className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl transition-all"
-                >
+              <div className="flex flex-col md:flex-row gap-4">
+                <button onClick={() => setStep(2)} className="py-4 px-6 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-all">
                   Back
                 </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? "Creating..." : "Save as Draft"}
+                <button onClick={handleCreateDraft} disabled={loading} className="flex-1 py-4 border-2 border-slate-900 text-slate-900 font-bold rounded-2xl hover:bg-slate-50 transition-all disabled:opacity-50">
+                  {loading ? "Saving..." : "Save Draft"}
                 </button>
-                <button
-                  type="button"
-                  onClick={handleCreateAndSubmit}
-                  disabled={loading}
-                  className="flex-1 py-3 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-emerald-500/50"
-                >
+                <button onClick={handleCreateAndSubmit} disabled={loading} className="flex-1 py-4 bg-emerald-600 text-white font-bold rounded-2xl hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all disabled:opacity-50">
                   {loading ? "Creating..." : "Create & Submit"}
                 </button>
               </div>
             </motion.div>
           )}
-        </form>
+        </AnimatePresence>
       </div>
     </div>
   );
 };
 
-const StepIndicator = ({ active, completed, number, label }) => (
-  <div className="flex items-center gap-2 flex-1">
-    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold border-2 transition-all ${completed
-      ? "bg-emerald-500 border-emerald-500 text-white"
-      : active
-        ? "bg-emerald-600 border-emerald-600 text-white"
-        : "bg-slate-800 border-slate-600 text-slate-400"
+// UI Components
+const StepCircle = ({ number, label, active, current }) => (
+  <div className="flex flex-col items-center gap-2">
+    <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold transition-all duration-500 ${current ? "bg-emerald-600 text-white ring-4 ring-emerald-100" :
+      active ? "bg-emerald-500 text-white" : "bg-white text-slate-400 border border-slate-200"
       }`}>
-      {completed ? "✓" : number}
+      {active && !current && number < 3 ? "✓" : number}
     </div>
-    <span className={`text-sm font-bold ${active ? "text-white" : "text-slate-500"}`}>
-      {label}
-    </span>
+    <span className={`text-xs font-bold uppercase tracking-wider ${active ? "text-slate-900" : "text-slate-400"}`}>{label}</span>
+  </div>
+);
+
+const InputGroup = ({ label, ...props }) => (
+  <div className="w-full">
+    <label className="block text-sm font-bold text-slate-700 mb-2">{label}</label>
+    <input
+      {...props}
+      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all placeholder:text-slate-400"
+    />
   </div>
 );
 

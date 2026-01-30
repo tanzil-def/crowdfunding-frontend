@@ -9,10 +9,12 @@ import {
   Plus,
   ArrowRight,
   Sparkles,
-  Zap,
-  Users
+  Users,
+  PieChart as PieIcon,
+  Activity
 } from 'lucide-react';
-import developerService from '../../api/developerService';
+// Chart এর জন্য Recharts ব্যবহার করা হয়েছে (npm install recharts)
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 const DeveloperDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -26,14 +28,47 @@ const DeveloperDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [dashRes, projectsRes] = await Promise.all([
-        developerService.getDashboardSummary(),
-        developerService.getMyProjects({ page_size: 5 })
-      ]);
+      // Simulation of API response with Mock Data
+      const mockDashboard = {
+        total_projects: 6,
+        total_shares_sold: 3,
+        total_investment_received: "1300.00",
+        pending_projects: 1,
+        unread_notifications: 2
+      };
 
-      const dashData = dashRes.data || dashRes;
-      setDashboard(dashData);
-      setProjects(projectsRes.results || []);
+      const mockProjects = [
+        {
+          id: "98f123bf-6c3e-4cdf-a253-6ebcac1e5d99",
+          title: "asdfghjkllkjhgf",
+          status: "PENDING",
+          total_shares: 3,
+          share_price: "33.00",
+          shares_sold: 0,
+          funding_percentage: 0
+        },
+        {
+          id: "7ca843b4-1e40-4626-8013-84f659dec6e5",
+          title: "creative residential tower",
+          status: "APPROVED",
+          total_shares: 40,
+          share_price: "100.00",
+          shares_sold: 2,
+          funding_percentage: 5
+        },
+        {
+          id: "91ccec6b-aaf1-484f-a28c-019a96c2d67b",
+          title: "VitalPulse: IoT Smart ICU",
+          status: "APPROVED",
+          total_shares: 10,
+          share_price: "100.00",
+          shares_sold: 1,
+          funding_percentage: 10
+        }
+      ];
+
+      setDashboard(mockDashboard);
+      setProjects(mockProjects);
     } catch (err) {
       console.error("Failed to load dashboard:", err);
     } finally {
@@ -41,17 +76,17 @@ const DeveloperDashboard = () => {
     }
   };
 
+  // Chart Data logic
+  const chartData = [
+    { name: 'Sold', value: dashboard?.total_shares_sold || 0, color: '#06b6d4' },
+    { name: 'Remaining', value: (dashboard?.total_projects * 10) - (dashboard?.total_shares_sold || 0), color: '#1e293b' }
+  ];
+
   if (loading) return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
       <motion.div
-        animate={{
-          rotate: 360,
-          scale: [1, 1.2, 1]
-        }}
-        transition={{
-          rotate: { duration: 2, repeat: Infinity, ease: "linear" },
-          scale: { duration: 1.5, repeat: Infinity, ease: "easeInOut" }
-        }}
+        animate={{ rotate: 360, scale: [1, 1.2, 1] }}
+        transition={{ rotate: { duration: 2, repeat: Infinity, ease: "linear" }, scale: { duration: 1.5, repeat: Infinity, ease: "easeInOut" } }}
         className="relative"
       >
         <div className="w-16 h-16 border-4 border-cyan-500/30 border-t-cyan-400 rounded-full" />
@@ -61,73 +96,22 @@ const DeveloperDashboard = () => {
   );
 
   const stats = [
-    {
-      label: 'Total Projects',
-      value: dashboard?.total_projects || 0,
-      icon: FolderKanban,
-      gradient: 'from-cyan-500 via-blue-500 to-indigo-600',
-      glow: 'shadow-cyan-500/50'
-    },
-    {
-      label: 'Investment Received',
-      value: dashboard?.total_investment_received || 0,
-      icon: DollarSign,
-      gradient: 'from-emerald-500 via-teal-500 to-green-600',
-      glow: 'shadow-emerald-500/50',
-      isMoney: true
-    },
-    {
-      label: 'Total Shares Sold',
-      value: dashboard?.total_shares_sold || 0,
-      icon: TrendingUp,
-      gradient: 'from-violet-500 via-purple-500 to-fuchsia-600',
-      glow: 'shadow-violet-500/50'
-    },
-    {
-      label: 'Pending Projects',
-      value: dashboard?.pending_projects || 0,
-      icon: Clock,
-      gradient: 'from-amber-500 via-orange-500 to-red-600',
-      glow: 'shadow-amber-500/50'
-    },
+    { label: 'Total Projects', value: dashboard?.total_projects || 0, icon: FolderKanban, gradient: 'from-cyan-500 via-blue-500 to-indigo-600', glow: 'shadow-cyan-500/50' },
+    { label: 'Investment Received', value: dashboard?.total_investment_received || 0, icon: DollarSign, gradient: 'from-emerald-500 via-teal-500 to-green-600', glow: 'shadow-emerald-500/50', isMoney: true },
+    { label: 'Total Shares Sold', value: dashboard?.total_shares_sold || 0, icon: TrendingUp, gradient: 'from-violet-500 via-purple-500 to-fuchsia-600', glow: 'shadow-violet-500/50' },
+    { label: 'Pending Projects', value: dashboard?.pending_projects || 0, icon: Clock, gradient: 'from-amber-500 via-orange-500 to-red-600', glow: 'shadow-amber-500/50' },
   ];
 
   const StatusBadge = ({ status }) => {
     const config = {
-      APPROVED: {
-        bg: 'bg-emerald-500/10',
-        text: 'text-emerald-400',
-        border: 'border-emerald-500/30',
-        glow: 'shadow-emerald-500/30'
-      },
-      PENDING_REVIEW: {
-        bg: 'bg-amber-500/10',
-        text: 'text-amber-400',
-        border: 'border-amber-500/30',
-        glow: 'shadow-amber-500/30'
-      },
-      DRAFT: {
-        bg: 'bg-slate-500/10',
-        text: 'text-slate-400',
-        border: 'border-slate-500/30',
-        glow: 'shadow-slate-500/20'
-      },
-      REJECTED: {
-        bg: 'bg-rose-500/10',
-        text: 'text-rose-400',
-        border: 'border-rose-500/30',
-        glow: 'shadow-rose-500/30'
-      }
+      APPROVED: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/30', glow: 'shadow-emerald-500/30' },
+      PENDING: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/30', glow: 'shadow-amber-500/30' },
+      DRAFT: { bg: 'bg-slate-500/10', text: 'text-slate-400', border: 'border-slate-500/30', glow: 'shadow-slate-500/20' },
+      REJECTED: { bg: 'bg-rose-500/10', text: 'text-rose-400', border: 'border-rose-500/30', glow: 'shadow-rose-500/30' }
     };
-
     const style = config[status] || config.DRAFT;
-
     return (
-      <span className={`
-        px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider
-        border ${style.bg} ${style.text} ${style.border} ${style.glow} shadow-lg
-        backdrop-blur-sm transition-all duration-300
-      `}>
+      <span className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border ${style.bg} ${style.text} ${style.border} ${style.glow} shadow-lg backdrop-blur-sm transition-all duration-300`}>
         {status?.replace(/_/g, ' ')}
       </span>
     );
@@ -135,288 +119,157 @@ const DeveloperDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white overflow-hidden relative">
-      {/* Animated Background Effects */}
+      {/* Background Animations */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            rotate: [0, 90, 0],
-            opacity: [0.03, 0.06, 0.03]
-          }}
+          animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0], opacity: [0.03, 0.06, 0.03] }}
           transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
           className="absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-to-br from-cyan-500/10 to-violet-500/10 rounded-full blur-3xl"
         />
-        <motion.div
-          animate={{
-            scale: [1.2, 1, 1.2],
-            rotate: [90, 0, 90],
-            opacity: [0.04, 0.08, 0.04]
-          }}
-          transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-gradient-to-tr from-violet-500/10 to-fuchsia-500/10 rounded-full blur-3xl"
-        />
       </div>
 
-      {/* Main Content */}
       <div className="relative z-10 p-4 md:p-8 max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="space-y-8"
-        >
-          {/* Header Section */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+
+          {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <div className="flex items-center gap-4 mb-3">
-                <motion.div
-                  animate={{
-                    rotate: [0, 10, -10, 0],
-                    scale: [1, 1.1, 1]
-                  }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
-                  className="p-3 bg-gradient-to-br from-cyan-500 to-violet-600 rounded-2xl shadow-2xl shadow-cyan-500/30"
-                >
-                  <Sparkles className="w-8 h-8 text-white" />
-                </motion.div>
-                <h1 className="text-5xl font-black bg-gradient-to-r from-cyan-400 via-violet-400 to-fuchsia-400 bg-clip-text text-transparent tracking-tight">
-                  Developer Dashboard
-                </h1>
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-gradient-to-br from-cyan-500 to-violet-600 rounded-2xl">
+                <Sparkles className="w-8 h-8 text-white" />
               </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-              className="flex items-center gap-4"
-            >
-              {dashboard?.unread_notifications > 0 && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="relative group"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity" />
-                  <div className="relative px-5 py-3 bg-slate-900/90 backdrop-blur-xl rounded-xl border border-amber-500/30 flex items-center gap-3">
-                    <motion.span
-                      animate={{ scale: [1, 1.3, 1] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                      className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-lg shadow-amber-400/50"
-                    />
-                    <span className="text-sm font-bold text-amber-400">
-                      {dashboard.unread_notifications} New Alerts
-                    </span>
-                  </div>
-                </motion.div>
-              )}
-
-              <Link
-                to="/developer/projects/create"
-                className="group relative overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl blur-xl opacity-60 group-hover:opacity-100 transition-opacity" />
-                <div className="relative flex items-center gap-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-6 py-3.5 rounded-xl transition-all font-bold shadow-2xl shadow-emerald-900/50 border border-emerald-400/20">
-                  <Plus className="h-5 w-5 group-hover:rotate-180 transition-transform duration-500" />
-                  <span>Launch Project</span>
-                  <Zap className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-              </Link>
-            </motion.div>
+              <h1 className="text-4xl font-black bg-gradient-to-r from-cyan-400 to-fuchsia-400 bg-clip-text text-transparent tracking-tighter">
+                Developer Central
+              </h1>
+            </div>
+            <Link to="/developer/projects/create" className="group relative flex items-center gap-3 bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-4 rounded-2xl transition-all font-black shadow-2xl shadow-emerald-900/40 border border-emerald-400/20 uppercase tracking-tighter">
+              <Plus className="h-5 w-5 group-hover:rotate-90 transition-transform" />
+              <span>Launch Project</span>
+            </Link>
           </div>
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {stats.map((stat, index) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{
-                  delay: index * 0.1,
-                  duration: 0.5,
-                  type: "spring",
-                  stiffness: 100
-                }}
-                whileHover={{
-                  scale: 1.05,
-                  y: -5
-                }}
-                className="group relative"
-              >
-                {/* Glow Effect */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} rounded-2xl blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-500`} />
-
-                {/* Card Content */}
-                <div className="relative h-full bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-700/50 group-hover:border-slate-600 p-6 transition-all duration-300 shadow-xl">
-                  {/* Icon Container */}
-                  <motion.div
-                    whileHover={{ rotate: [0, -10, 10, 0] }}
-                    transition={{ duration: 0.5 }}
-                    className={`p-4 rounded-xl bg-gradient-to-br ${stat.gradient} w-fit mb-4 shadow-lg ${stat.glow}`}
-                  >
-                    <stat.icon className="h-7 w-7 text-white" strokeWidth={2.5} />
-                  </motion.div>
-
-                  {/* Label */}
-                  <p className="text-slate-400 text-sm font-semibold mb-2 uppercase tracking-wider">
-                    {stat.label}
-                  </p>
-
-                  {/* Value */}
-                  <div className="flex items-baseline gap-2">
-                    <motion.span
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="text-4xl font-black text-white"
-                    >
-                      {stat.isMoney ? `$${parseFloat(stat.value).toLocaleString()}` : stat.value}
-                    </motion.span>
-                  </div>
+            {stats.map((stat) => (
+              <motion.div key={stat.label} whileHover={{ y: -5 }} className="relative bg-slate-900/80 backdrop-blur-xl rounded-[2rem] border border-slate-800 p-6 shadow-xl">
+                <div className={`p-3 rounded-xl bg-gradient-to-br ${stat.gradient} w-fit mb-4 shadow-lg ${stat.glow}`}>
+                  <stat.icon className="h-6 w-6 text-white" />
                 </div>
+                <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">{stat.label}</p>
+                <h3 className="text-3xl font-black text-white tracking-tighter">
+                  {stat.isMoney ? `$${parseFloat(stat.value).toLocaleString()}` : stat.value}
+                </h3>
               </motion.div>
             ))}
           </div>
 
-          {/* Projects Table */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="relative group"
-          >
-            {/* Glow Effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-violet-500/10 rounded-3xl blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-
-            {/* Table Container */}
-            <div className="relative bg-slate-900/50 backdrop-blur-xl rounded-3xl border border-slate-700/50 overflow-hidden shadow-2xl">
-              {/* Header */}
-              <div className="p-8 border-b border-slate-700/50 flex justify-between items-center bg-gradient-to-r from-slate-900/80 to-slate-800/80">
-                <h3 className="text-2xl font-black text-white tracking-tight">
-                  Project Overview
+          {/* Circle Graph & Investment Insights Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Project Table (Left 2 Columns) */}
+            <div className="lg:col-span-2 relative bg-slate-900/50 backdrop-blur-xl rounded-[2.5rem] border border-slate-800 overflow-hidden shadow-2xl">
+              <div className="p-8 border-b border-slate-800 flex justify-between items-center bg-slate-900/30">
+                <h3 className="text-xl font-black text-white tracking-tight flex items-center gap-3">
+                  <Activity className="text-cyan-400" /> Project Overview
                 </h3>
-                <Link
-                  to="/developer/projects"
-                  className="group/link flex items-center gap-2 text-cyan-400 hover:text-cyan-300 text-sm font-bold transition-all"
-                >
-                  <span>View All</span>
-                  <ArrowRight className="h-4 w-4 group-hover/link:translate-x-1 transition-transform" />
+                <Link to="/developer/projects" className="text-cyan-400 hover:text-cyan-300 text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-all">
+                  View All <ArrowRight size={14} />
                 </Link>
               </div>
-
-              {/* Table */}
               <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-slate-800/50 text-slate-300 text-xs font-bold uppercase tracking-widest">
+                <table className="w-full text-left">
+                  <thead className="bg-slate-950/50 text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">
                     <tr>
-                      <th className="p-6 text-left">Project Name</th>
-                      <th className="p-6 text-left">Status</th>
-                      <th className="p-6 text-left">Equity Progress</th>
-                      <th className="p-6 text-left">Investors</th>
+                      <th className="p-6">Project Name</th>
+                      <th className="p-6">Status</th>
+                      <th className="p-6">Equity Progress</th>
+                      <th className="p-6">Investors</th>
                       <th className="p-6 text-right">Capital Raised</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-700/30">
-                    {projects.length > 0 ? projects.map((project, idx) => {
-                      const progress = (project.shares_sold / project.total_shares) * 100;
-                      const raised = (project.shares_sold || 0) * (project.share_price || 0);
-
+                  <tbody className="divide-y divide-slate-800/50">
+                    {projects.map((project) => {
+                      const progress = project.funding_percentage || ((project.shares_sold / project.total_shares) * 100) || 0;
+                      const raised = parseFloat(project.shares_sold || 0) * parseFloat(project.share_price || 0);
+                      const displayInvestors = project.investor_count || (project.shares_sold > 0 ? 1 : 0);
                       return (
-                        <motion.tr
-                          key={project.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: idx * 0.1 }}
-                          className="group/row hover:bg-slate-800/30 transition-all duration-300"
-                        >
-                          {/* Project Name */}
+                        <tr key={project.id} className="hover:bg-slate-800/20 transition-all group">
                           <td className="p-6">
-                            <span className="font-bold text-white group-hover/row:text-cyan-400 transition-colors uppercase tracking-wide">
-                              {project.title}
-                            </span>
+                            <span className="font-black text-slate-200 group-hover:text-cyan-400 transition-colors uppercase text-sm tracking-tight">{project.title}</span>
                           </td>
-
-                          {/* Status */}
+                          <td className="p-6"><StatusBadge status={project.status} /></td>
                           <td className="p-6">
-                            <StatusBadge status={project.status} />
-                          </td>
-
-                          {/* Progress Bar */}
-                          <td className="p-6">
-                            <div className="flex items-center gap-4">
-                              <div className="flex-1 h-2.5 bg-slate-800 rounded-full overflow-hidden shadow-inner">
-                                <motion.div
-                                  initial={{ width: 0 }}
-                                  animate={{ width: `${progress}%` }}
-                                  transition={{ duration: 1, delay: idx * 0.1 }}
-                                  className="h-full bg-gradient-to-r from-cyan-500 to-violet-500 rounded-full shadow-lg shadow-cyan-500/50"
-                                />
+                            <div className="flex items-center gap-3">
+                              <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden w-24">
+                                <div className="h-full bg-gradient-to-r from-cyan-500 to-violet-500" style={{ width: `${progress}%` }} />
                               </div>
-                              <span className="text-sm font-bold text-slate-300 min-w-[50px] text-right">
-                                {Math.round(progress)}%
-                              </span>
+                              <span className="text-[10px] font-black text-slate-400">{Math.round(progress)}%</span>
                             </div>
                           </td>
-
-                          {/* Investor Count */}
                           <td className="p-6">
                             <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4 text-slate-500" />
-                              <span className="font-bold text-white">
-                                {project.investor_count || 0}
-                              </span>
+                              <Users className={`h-4 w-4 ${displayInvestors > 0 ? 'text-orange-500' : 'text-slate-600'}`} />
+                              <span className="font-black text-slate-200">{displayInvestors}</span>
                             </div>
                           </td>
-
-                          {/* Capital Raised */}
                           <td className="p-6 text-right">
-                            <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
-                              <DollarSign className="h-4 w-4 text-emerald-400" />
-                              <span className="font-black text-emerald-400 text-lg">
-                                {raised.toLocaleString()}
-                              </span>
+                            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/5 border border-emerald-500/20 rounded-xl">
+                              <span className="font-black text-emerald-400 text-sm">${raised.toLocaleString()}</span>
                             </div>
                           </td>
-                        </motion.tr>
+                        </tr>
                       );
-                    }) : (
-                      <tr>
-                        <td colSpan="4" className="p-16 text-center">
-                          <motion.div
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="flex flex-col items-center gap-6"
-                          >
-                            <div className="p-6 bg-slate-800/50 rounded-full">
-                              <FolderKanban className="w-16 h-16 text-slate-600" />
-                            </div>
-                            <p className="text-xl font-semibold text-slate-400">
-                              No projects yet. Launch your first project to get started.
-                            </p>
-                            <Link
-                              to="/developer/projects/create"
-                              className="group/cta flex items-center gap-2 bg-gradient-to-r from-cyan-600 to-violet-600 hover:from-cyan-500 hover:to-violet-500 text-white px-6 py-3 rounded-xl transition-all font-bold shadow-xl shadow-cyan-900/30"
-                            >
-                              <Plus className="h-5 w-5 group-hover/cta:rotate-90 transition-transform" />
-                              Create First Project
-                            </Link>
-                          </motion.div>
-                        </td>
-                      </tr>
-                    )}
+                    })}
                   </tbody>
                 </table>
               </div>
             </div>
-          </motion.div>
+
+            {/* Investment Distribution Chart (Right 1 Column) */}
+            <div className="relative bg-slate-900/50 backdrop-blur-xl rounded-[2.5rem] border border-slate-800 p-8 shadow-2xl flex flex-col items-center justify-center">
+              <h3 className="text-lg font-black text-white tracking-tight mb-6 flex items-center gap-2 self-start uppercase text-[12px] text-slate-400">
+                <PieIcon className="w-4 h-4 text-violet-400" /> Investment Circle
+              </h3>
+
+              <div className="h-64 w-full relative">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={chartData}
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={8}
+                      dataKey="value"
+                    >
+                      {chartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '12px' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-3xl font-black text-white">{dashboard?.total_shares_sold}</span>
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Shares Sold</span>
+                </div>
+              </div>
+
+              <div className="w-full mt-6 space-y-3">
+                <div className="flex justify-between items-center p-3 bg-slate-950/50 rounded-xl border border-slate-800/50">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.5)]" />
+                    <span className="text-xs font-bold text-slate-400">Shares Sold</span>
+                  </div>
+                  <span className="text-xs font-black">{dashboard?.total_shares_sold}</span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-slate-950/50 rounded-xl border border-slate-800/50">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-slate-700" />
+                    <span className="text-xs font-bold text-slate-400">Total Capacity</span>
+                  </div>
+                  <span className="text-xs font-black">{dashboard?.total_projects * 10}</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </motion.div>
       </div>
     </div>
