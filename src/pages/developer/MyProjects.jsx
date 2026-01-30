@@ -7,22 +7,16 @@ import {
   Edit,
   Image as ImageIcon,
   Send,
-  TrendingUp,
-  Calendar,
-  DollarSign,
-  Users,
   AlertCircle,
   X
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { getMediaUrl } from "../../utils/media";
 
-// --- Custom Professional Modal Component ---
 const ConfirmModal = ({ isOpen, onClose, onConfirm, loading }) => (
   <AnimatePresence>
     {isOpen && (
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-        {/* Overlay */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -30,7 +24,6 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, loading }) => (
           onClick={onClose}
           className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
         />
-        {/* Modal Card */}
         <motion.div
           initial={{ scale: 0.9, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -42,30 +35,17 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, loading }) => (
               <X size={20} />
             </button>
           </div>
-
           <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-6 text-emerald-400">
             <AlertCircle size={32} />
           </div>
-
           <h3 className="text-2xl font-black text-white mb-2 italic uppercase tracking-tighter">Confirm Submission</h3>
           <p className="text-slate-400 text-sm font-bold leading-relaxed mb-8 uppercase tracking-widest">
-            Once submitted, the project will be locked for admin review. You cannot edit it until the review is complete.
+            Once submitted, the project will be locked for admin review.
           </p>
-
           <div className="flex gap-4">
-            <button
-              onClick={onClose}
-              disabled={loading}
-              className="flex-1 py-4 bg-slate-800 hover:bg-slate-700 text-white font-black rounded-xl transition-all uppercase text-[10px] tracking-widest"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={onConfirm}
-              disabled={loading}
-              className="flex-1 py-4 bg-gradient-to-r from-emerald-500 to-green-500 text-slate-950 font-black rounded-xl transition-all shadow-lg shadow-emerald-500/20 uppercase text-[10px] tracking-widest flex items-center justify-center gap-2"
-            >
-              {loading ? <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" /> : "Submit Now"}
+            <button onClick={onClose} disabled={loading} className="flex-1 py-4 bg-slate-800 text-white font-black rounded-xl uppercase text-[10px]">Cancel</button>
+            <button onClick={onConfirm} disabled={loading} className="flex-1 py-4 bg-gradient-to-r from-emerald-500 to-green-500 text-slate-950 font-black rounded-xl uppercase text-[10px]">
+              {loading ? "..." : "Submit Now"}
             </button>
           </div>
         </motion.div>
@@ -76,18 +56,15 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, loading }) => (
 
 const MyProjects = () => {
   const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Initial false to control manual first load
   const [filter, setFilter] = useState("ALL");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  useEffect(() => {
-    fetchProjects();
-  }, [filter, page]);
-
   const fetchProjects = async () => {
+    // Prevent multiple simultaneous loads that crash the server
+    setLoading(true);
     try {
-      setLoading(true);
       const params = { page, page_size: 12 };
       if (filter !== "ALL") params.status = filter;
       const data = await developerService.getMyProjects(params);
@@ -100,10 +77,14 @@ const MyProjects = () => {
     }
   };
 
+  useEffect(() => {
+    fetchProjects();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter, page]);
+
   return (
     <div className="min-h-screen bg-[#020617] p-8 font-sans">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <motion.div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-12">
           <div>
             <h1 className="text-6xl font-black text-white tracking-tighter italic uppercase mb-2">
@@ -111,23 +92,19 @@ const MyProjects = () => {
             </h1>
             <p className="text-slate-500 font-bold uppercase tracking-[0.3em] text-[10px]">Developer Control Center</p>
           </div>
-          <Link
-            to="/developer/projects/new"
-            className="px-8 py-4 bg-white text-slate-950 font-black rounded-2xl transition-all shadow-xl hover:scale-105 active:scale-95 flex items-center gap-2 uppercase text-xs tracking-widest italic"
-          >
-            <Plus className="w-4 h-4" /> New Launch
+          <Link to="/developer/projects/new" className="px-8 py-4 bg-white text-slate-950 font-black rounded-2xl shadow-xl uppercase text-xs tracking-widest italic">
+            <Plus className="w-4 h-4 inline mr-2" /> New Launch
           </Link>
         </motion.div>
 
-        {/* Status Filters */}
         <div className="flex gap-3 mb-12 overflow-x-auto pb-4 no-scrollbar">
-          {["ALL", "DRAFT", "PENDING_REVIEW", "APPROVED", "REJECTED", "NEEDS_CHANGES"].map((status) => (
+          {["ALL", "DRAFT", "PENDING", "APPROVED", "REJECTED", "NEEDS_CHANGES"].map((status) => (
             <button
               key={status}
-              onClick={() => { setFilter(status); setPage(1); }}
+              onClick={() => { if (!loading) { setFilter(status); setPage(1); } }}
               className={`px-6 py-3 rounded-xl font-black text-[10px] tracking-widest uppercase transition-all border ${filter === status
                 ? "bg-emerald-500 border-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/20"
-                : "bg-slate-900 border-white/5 text-slate-500 hover:border-white/20 hover:text-white"
+                : "bg-slate-900 border-white/5 text-slate-500 hover:text-white"
                 }`}
             >
               {status.replace("_", " ")}
@@ -135,7 +112,6 @@ const MyProjects = () => {
           ))}
         </div>
 
-        {/* Grid */}
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[1, 2, 3].map(i => <div key={i} className="h-96 bg-slate-900/50 rounded-[2.5rem] animate-pulse" />)}
@@ -162,16 +138,18 @@ const ProjectCard = ({ project, index, onRefresh }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchMedia = async () => {
       try {
         const mediaData = await developerService.getProjectMedia(project.id);
-        if (mediaData.results?.length > 0) {
+        if (isMounted && mediaData.results?.length > 0) {
           const imageItem = mediaData.results.find(m => m.type === "IMAGE") || mediaData.results[0];
           setCoverImage(imageItem.file || imageItem.file_url);
         }
-      } catch (err) { console.error(err); }
+      } catch (err) { console.error("Media Load Error", err); }
     };
     fetchMedia();
+    return () => { isMounted = false; };
   }, [project.id]);
 
   const handleConfirmSubmit = async () => {
@@ -190,7 +168,7 @@ const ProjectCard = ({ project, index, onRefresh }) => {
 
   const statusConfig = {
     DRAFT: "bg-slate-500/10 text-slate-400 border-slate-500/20",
-    PENDING_REVIEW: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+    PENDING: "bg-amber-500/10 text-amber-500 border-amber-500/20",
     APPROVED: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
     REJECTED: "bg-rose-500/10 text-rose-500 border-rose-500/20",
     NEEDS_CHANGES: "bg-orange-500/10 text-orange-500 border-orange-500/20"
@@ -203,13 +181,14 @@ const ProjectCard = ({ project, index, onRefresh }) => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.1 }}
+        transition={{ delay: index * 0.05 }}
         className="bg-slate-900/40 border border-white/5 rounded-[2.5rem] overflow-hidden group hover:border-emerald-500/30 transition-all backdrop-blur-3xl shadow-2xl"
       >
         <div className="h-56 relative overflow-hidden">
           <img
             src={getMediaUrl(coverImage) || "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80"}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-60"
+            alt=""
           />
           <div className="absolute top-6 right-6">
             <span className={`px-4 py-2 rounded-full text-[10px] font-black border uppercase tracking-widest backdrop-blur-xl ${statusConfig[project.status]}`}>
@@ -220,7 +199,6 @@ const ProjectCard = ({ project, index, onRefresh }) => {
 
         <div className="p-8">
           <h3 className="text-2xl font-black text-white mb-3 italic tracking-tighter line-clamp-1 uppercase">{project.title}</h3>
-
           <div className="grid grid-cols-2 gap-4 mb-8">
             <div className="bg-black/20 p-4 rounded-2xl border border-white/5">
               <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Asset Value</p>
@@ -231,45 +209,31 @@ const ProjectCard = ({ project, index, onRefresh }) => {
               <p className="text-sm font-black text-emerald-400 italic">${parseFloat(project.share_price || 0).toFixed(2)}</p>
             </div>
           </div>
-
           <div className="mb-8">
             <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-              <motion.div initial={{ width: 0 }} animate={{ width: `${progress}%` }} className="bg-emerald-500 h-full shadow-[0_0_10px_emerald]" />
+              <motion.div initial={{ width: 0 }} animate={{ width: `${progress}%` }} className="bg-emerald-500 h-full" />
             </div>
             <div className="flex justify-between mt-3 text-[9px] font-black uppercase tracking-widest text-slate-500">
               <span>{progress.toFixed(1)}% Funded</span>
               <span>{project.remaining_shares || 0} Left</span>
             </div>
           </div>
-
           <div className="flex gap-3">
             <Link to={`/developer/projects/${project.id}/edit`} className="flex-1 py-4 bg-slate-800 hover:bg-white hover:text-slate-950 text-white font-black rounded-xl transition-all text-center text-[10px] uppercase tracking-widest italic flex items-center justify-center gap-2">
               <Edit size={14} /> Update
             </Link>
-
             <Link to={`/developer/projects/${project.id}/media`} className="w-14 h-14 bg-slate-800 hover:bg-cyan-500 text-white rounded-xl transition-all flex items-center justify-center border border-white/5">
               <ImageIcon size={18} />
             </Link>
-
             {project.status === "DRAFT" && (
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="w-14 h-14 bg-emerald-500 text-slate-950 rounded-xl transition-all flex items-center justify-center shadow-lg shadow-emerald-500/20 active:scale-90"
-              >
+              <button onClick={() => setIsModalOpen(true)} className="w-14 h-14 bg-emerald-500 text-slate-950 rounded-xl transition-all flex items-center justify-center">
                 <Send size={18} />
               </button>
             )}
           </div>
         </div>
       </motion.div>
-
-      {/* Confirmation Modal Hooked Here */}
-      <ConfirmModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onConfirm={handleConfirmSubmit}
-        loading={submitting}
-      />
+      <ConfirmModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onConfirm={handleConfirmSubmit} loading={submitting} />
     </>
   );
 };

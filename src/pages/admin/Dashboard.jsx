@@ -164,8 +164,8 @@ const AdminDashboard = () => {
           className="lg:col-span-1 bg-slate-900/40 border border-white/5 p-8 rounded-[2.5rem] relative"
         >
           <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-8 italic">Asset Allocation</h3>
-          <div className="h-64 relative">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-64 relative" style={{ minWidth: 0, display: 'block' }}>
+            <ResponsiveContainer width="100%" height="100%" debounce={100}>
               <PieChart>
                 <Pie
                   data={projectStatusData}

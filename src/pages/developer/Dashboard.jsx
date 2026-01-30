@@ -13,7 +13,6 @@ import {
   PieChart as PieIcon,
   Activity
 } from 'lucide-react';
-// Chart এর জন্য Recharts ব্যবহার করা হয়েছে (npm install recharts)
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 const DeveloperDashboard = () => {
@@ -28,7 +27,6 @@ const DeveloperDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      // Simulation of API response with Mock Data
       const mockDashboard = {
         total_projects: 6,
         total_shares_sold: 3,
@@ -76,10 +74,9 @@ const DeveloperDashboard = () => {
     }
   };
 
-  // Chart Data logic
   const chartData = [
     { name: 'Sold', value: dashboard?.total_shares_sold || 0, color: '#06b6d4' },
-    { name: 'Remaining', value: (dashboard?.total_projects * 10) - (dashboard?.total_shares_sold || 0), color: '#1e293b' }
+    { name: 'Remaining', value: Math.max(0, (dashboard?.total_projects * 10) - (dashboard?.total_shares_sold || 0)), color: '#1e293b' }
   ];
 
   if (loading) return (
@@ -95,11 +92,12 @@ const DeveloperDashboard = () => {
     </div>
   );
 
+  // Added 'link' property to each stat object
   const stats = [
-    { label: 'Total Projects', value: dashboard?.total_projects || 0, icon: FolderKanban, gradient: 'from-cyan-500 via-blue-500 to-indigo-600', glow: 'shadow-cyan-500/50' },
-    { label: 'Investment Received', value: dashboard?.total_investment_received || 0, icon: DollarSign, gradient: 'from-emerald-500 via-teal-500 to-green-600', glow: 'shadow-emerald-500/50', isMoney: true },
-    { label: 'Total Shares Sold', value: dashboard?.total_shares_sold || 0, icon: TrendingUp, gradient: 'from-violet-500 via-purple-500 to-fuchsia-600', glow: 'shadow-violet-500/50' },
-    { label: 'Pending Projects', value: dashboard?.pending_projects || 0, icon: Clock, gradient: 'from-amber-500 via-orange-500 to-red-600', glow: 'shadow-amber-500/50' },
+    { label: 'Total Projects', value: dashboard?.total_projects || 0, icon: FolderKanban, gradient: 'from-cyan-500 via-blue-500 to-indigo-600', glow: 'shadow-cyan-500/50', link: '/developer/projects' },
+    { label: 'Investment Received', value: dashboard?.total_investment_received || 0, icon: DollarSign, gradient: 'from-emerald-500 via-teal-500 to-green-600', glow: 'shadow-emerald-500/50', isMoney: true, link: '/developer/projects' },
+    { label: 'Total Shares Sold', value: dashboard?.total_shares_sold || 0, icon: TrendingUp, gradient: 'from-violet-500 via-purple-500 to-fuchsia-600', glow: 'shadow-violet-500/50', link: '/developer/projects' },
+    { label: 'Pending Projects', value: dashboard?.pending_projects || 0, icon: Clock, gradient: 'from-amber-500 via-orange-500 to-red-600', glow: 'shadow-amber-500/50', link: '/developer/projects' },
   ];
 
   const StatusBadge = ({ status }) => {
@@ -119,7 +117,6 @@ const DeveloperDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white overflow-hidden relative">
-      {/* Background Animations */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
           animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0], opacity: [0.03, 0.06, 0.03] }}
@@ -131,40 +128,38 @@ const DeveloperDashboard = () => {
       <div className="relative z-10 p-4 md:p-8 max-w-7xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
 
-          {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-gradient-to-br from-cyan-500 to-violet-600 rounded-2xl">
                 <Sparkles className="w-8 h-8 text-white" />
               </div>
               <h1 className="text-4xl font-black bg-gradient-to-r from-cyan-400 to-fuchsia-400 bg-clip-text text-transparent tracking-tighter">
-                Developer Central
+                DeveloperDashboard
               </h1>
             </div>
-            <Link to="/developer/projects/create" className="group relative flex items-center gap-3 bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-4 rounded-2xl transition-all font-black shadow-2xl shadow-emerald-900/40 border border-emerald-400/20 uppercase tracking-tighter">
+            <Link to="/developer/projects/new" className="group relative flex items-center gap-3 bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-4 rounded-2xl transition-all font-black shadow-2xl shadow-emerald-900/40 border border-emerald-400/20 uppercase tracking-tighter">
               <Plus className="h-5 w-5 group-hover:rotate-90 transition-transform" />
-              <span>Launch Project</span>
+              <span>Create Now</span>
             </Link>
           </div>
 
-          {/* Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {stats.map((stat) => (
-              <motion.div key={stat.label} whileHover={{ y: -5 }} className="relative bg-slate-900/80 backdrop-blur-xl rounded-[2rem] border border-slate-800 p-6 shadow-xl">
-                <div className={`p-3 rounded-xl bg-gradient-to-br ${stat.gradient} w-fit mb-4 shadow-lg ${stat.glow}`}>
-                  <stat.icon className="h-6 w-6 text-white" />
-                </div>
-                <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">{stat.label}</p>
-                <h3 className="text-3xl font-black text-white tracking-tighter">
-                  {stat.isMoney ? `$${parseFloat(stat.value).toLocaleString()}` : stat.value}
-                </h3>
-              </motion.div>
+              <Link to={stat.link} key={stat.label} className="block">
+                <motion.div whileHover={{ y: -5 }} className="relative bg-slate-900/80 backdrop-blur-xl rounded-[2rem] border border-slate-800 p-6 shadow-xl hover:border-slate-700 transition-colors cursor-pointer">
+                  <div className={`p-3 rounded-xl bg-gradient-to-br ${stat.gradient} w-fit mb-4 shadow-lg ${stat.glow}`}>
+                    <stat.icon className="h-6 w-6 text-white" />
+                  </div>
+                  <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">{stat.label}</p>
+                  <h3 className="text-3xl font-black text-white tracking-tighter">
+                    {stat.isMoney ? `$${parseFloat(stat.value).toLocaleString()}` : stat.value}
+                  </h3>
+                </motion.div>
+              </Link>
             ))}
           </div>
 
-          {/* Circle Graph & Investment Insights Section */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Project Table (Left 2 Columns) */}
             <div className="lg:col-span-2 relative bg-slate-900/50 backdrop-blur-xl rounded-[2.5rem] border border-slate-800 overflow-hidden shadow-2xl">
               <div className="p-8 border-b border-slate-800 flex justify-between items-center bg-slate-900/30">
                 <h3 className="text-xl font-black text-white tracking-tight flex items-center gap-3">
@@ -223,13 +218,12 @@ const DeveloperDashboard = () => {
               </div>
             </div>
 
-            {/* Investment Distribution Chart (Right 1 Column) */}
-            <div className="relative bg-slate-900/50 backdrop-blur-xl rounded-[2.5rem] border border-slate-800 p-8 shadow-2xl flex flex-col items-center justify-center">
+            <div className="relative bg-slate-900/50 backdrop-blur-xl rounded-[2.5rem] border border-slate-800 p-8 shadow-2xl flex flex-col items-center justify-center min-h-[450px]">
               <h3 className="text-lg font-black text-white tracking-tight mb-6 flex items-center gap-2 self-start uppercase text-[12px] text-slate-400">
                 <PieIcon className="w-4 h-4 text-violet-400" /> Investment Circle
               </h3>
 
-              <div className="h-64 w-full relative">
+              <div className="w-full h-64 relative overflow-hidden" style={{ minWidth: '0px', minHeight: '256px' }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -238,14 +232,19 @@ const DeveloperDashboard = () => {
                       outerRadius={80}
                       paddingAngle={8}
                       dataKey="value"
+                      isAnimationActive={true}
                     >
                       {chartData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                       ))}
                     </Pie>
-                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '12px' }} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '12px' }}
+                      itemStyle={{ color: '#fff' }}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
+
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                   <span className="text-3xl font-black text-white">{dashboard?.total_shares_sold}</span>
                   <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Shares Sold</span>
@@ -265,10 +264,11 @@ const DeveloperDashboard = () => {
                     <div className="w-2 h-2 rounded-full bg-slate-700" />
                     <span className="text-xs font-bold text-slate-400">Total Capacity</span>
                   </div>
-                  <span className="text-xs font-black">{dashboard?.total_projects * 10}</span>
+                  <span className="text-xs font-black">{(dashboard?.total_projects || 0) * 10}</span>
                 </div>
               </div>
             </div>
+
           </div>
         </motion.div>
       </div>
